@@ -5,7 +5,9 @@ services:
     container_name: database
     environment:
       MYSQL_ROOT_PASSWORD: admin_password
-      MYSQL_DATABASE: access_control
+      MYSQL_DATABASE: monitoring
+    ports:
+      - 3306:3306
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
