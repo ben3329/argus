@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container my-3">
+    <h2 class="border-bottom py-2">{{ asset.name }}</h2>
+    <div class="card my-3">
+        <div class="card-body">
+            <div class="card-text" style="white-space: pre-line;">
+                {{ asset.ip }}
+            </div>
+            <div class="d-flex justify-content-end">
+                <div class="badge bg-light text-dark p-2">
+                    {{ asset.port }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <h5 class="border-bottom my-3 py-2">
+        {{ asset.monitoring_set.count }}
+    </h5>
+    {% for monitor in asset.monitoring_set.all %}
+    <div class="card my-3">
+        <div class="card-body">
+            <div class="card-text" style="white-space: pre-line;">
+                {{ monitor.name }}
+            </div>
+            <div class="d-flex justify-content-end">
+                <div class="badge bg-light text-dark p-2">
+                    {{ monitor.target_system }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    <form action="{% url 'monitoring:mon_create' asset.id %}" method="post" class="my-3">
+    {% csrf_token %}
+        <div class="mb-3">
+            <label for="name" class="form-label"> name </label>
+            <textarea name="name" id="name" rows="15" class="form-control" rows="10"></textarea>
+        <div>
+        <div class="mb-3">
+            <label for="target_system" class="form-label"> target system </label>
+            <textarea name="target_system" id="target_system" rows="15" class="form-control" rows="10"></textarea>
+        <div>
+        <input type="submit" value="monitoring 등록" class="btn btn-primary">
+    </form>
+</div>
+{% endblock %}
