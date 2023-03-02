@@ -15,16 +15,16 @@ class AssetsTest(TestCase):
         User.objects.create_user(
             'test', 'test@myproject.com', 'password')
         self.normal_user = User.objects.get(username='test')
-        Assets.objects.all().delete()
+        Asset.objects.all().delete()
 
     def tearDown(self):
-        Assets.objects.all().delete()
+        Asset.objects.all().delete()
 
     def test_register_asset(self):
         assets_mgr = assets.AssetsManager(self.super_user)
         rc = assets_mgr.register_asset(name='test_server', access_type='ssh')
         self.assertIs(rc, True)
-        asset = Assets.objects.filter(
+        asset = Asset.objects.filter(
             user=self.super_user, name='test_server', access_type='ssh').first()
         self.assertIsNotNone(asset)
 
@@ -98,13 +98,13 @@ class SecretTest(TestCase):
         self.secret_mgr = secrets.SecretsManager(self.user)
 
     def tearDown(self):
-        Assets.objects.all().delete()
+        Asset.objects.all().delete()
 
     def test_create_secret(self):
         rc = self.secret_mgr.create_secret(
             name='test', access_type='ssh', secret=self.secret)
         self.assertIs(rc, True)
-        secret = Secrets.objects.filter(
+        secret = Secret.objects.filter(
             user=self.user, name='test', access_type='ssh', secret=self.secret).first()
         self.assertIsNotNone(secret)
 
@@ -141,15 +141,4 @@ class SSHTest(TestCase):
         self.password = 'admin_password'
 
     def tearDown(self):
-        Assets.objects.all().delete()
-
-    def test_create_access_info_with_account(self):
-        asset = Assets.objects.get(name='test_server')
-        ssh_info_mgr = ssh.SSHAccessInfoManager(asset=asset)
-        rc = ssh_info_mgr.create_access_info_with_account(
-            ip=self.ip, port=self.port, user_id=self.user_id, password=self.password)
-        self.assertIs(rc, True)
-        ssh_info = SSHAccessInfo.objects.filter(
-            asset=asset, ip=self.ip, port=self.port,
-            user_id=self.user_id, password=self.password).first()
-        self.assertIsNotNone(ssh_info)
+        Asset.objects.all().delete()

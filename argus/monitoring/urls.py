@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import *
+from django.views.generic import RedirectView
+from monitoring import views
 
 # router = DefaultRouter()
 # router.register(r'asset', AssetViewSet)
@@ -12,8 +13,11 @@ app_name = 'monitoring'
 
 urlpatterns = [
     # path('', include(router.urls)),
-    path('', index, name='index'),
-    path('<int:asset_id>/', detail, name='detail'),
-    path('mon/create/<int:asset_id>/', monitoring_create, name='mon_create'),
-    path('asset/create/', asset_create, name='asset_create')
+    path('', RedirectView.as_view(url='dashboard/')),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('asset/', views.asset, name='asset'),
+    path('monitor/', views.monitor, name='monitor'),
+    path('secret/', views.secret, name='secret'),
+    path('scraping_code/', views.scraping_code, name='scraping_code'),
+    path('config/', views.config, name='config'),
 ]

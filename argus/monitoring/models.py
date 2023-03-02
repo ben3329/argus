@@ -10,7 +10,7 @@ class AccessType(models.TextChoices):
     ssh = 'ssh'
 
 
-class Secrets(models.Model):
+class Secret(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=31)
     access_type = models.CharField(choices=AccessType.choices, max_length=15)
@@ -25,7 +25,7 @@ class Secrets(models.Model):
         ]
 
 
-class Assets(models.Model):
+class Asset(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=31)
     access_type = models.CharField(choices=AccessType.choices, max_length=15)
@@ -34,7 +34,7 @@ class Assets(models.Model):
         65535)], default=22)  # possible ssh port range is 1 ~ 65535
     username = models.CharField(blank=True, null=True, max_length=31)
     password = models.CharField(blank=True, null=True, max_length=31)
-    ssh_key = models.ForeignKey(Secrets, on_delete=models.SET_NULL, null=True, blank=True)
+    ssh_key = models.ForeignKey(Secret, on_delete=models.SET_NULL, null=True, blank=True)
 
     # def clean(self):
     #     cleaned_data = super().clean()
@@ -53,7 +53,7 @@ class Assets(models.Model):
         ]
 
 
-class ScrapingCodes(models.Model):
+class ScrapingCode(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=31)
 
@@ -76,9 +76,9 @@ class ScrapingCodes(models.Model):
     output_type = models.CharField(choices=OutputType.choices, max_length=15)
 
 
-class Monitoring(models.Model):
+class Monitor(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    asset = models.ForeignKey(Assets, on_delete=models.CASCADE)
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     name = models.CharField(max_length=15)
 
     class TargetSystem(models.TextChoices):
@@ -86,7 +86,7 @@ class Monitoring(models.Model):
     target_system = models.CharField(
         choices=TargetSystem.choices, max_length=15)
     scrap_code = models.ForeignKey(
-        ScrapingCodes, on_delete=models.SET_NULL, null=True, blank=True)
+        ScrapingCode, on_delete=models.SET_NULL, null=True, blank=True)
     interval = models.IntegerField(validators=[MinValueValidator(
         1)], default=10, help_text="interval time as seconds.")
     reporting = models.BooleanField(default=False)

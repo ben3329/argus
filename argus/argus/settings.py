@@ -152,8 +152,9 @@ LOGGING = {
     },
 }
 
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/monitoring/dashboard'
+LOGOUT_REDIRECT_URL = '/common/login'
+LOGIN_URL='/common/login'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'

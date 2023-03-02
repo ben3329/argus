@@ -1,9 +1,9 @@
 from django import forms
-from monitoring.models import Assets
+from monitoring.models import Asset
 
 class AssetsForm(forms.ModelForm):
     class Meta:
-        model = Assets
+        model = Asset
         fields = ['user', 'name', 'access_type', 'ip', 'port', 'username', 'password', 'ssh_key']
         widgets = {
             'name': forms.TextInput(attrs={'class':'form-control'}),

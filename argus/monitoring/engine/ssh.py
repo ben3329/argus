@@ -5,7 +5,7 @@ import paramiko
 
 
 class SSHAccessInfoManager(object):
-    def __init__(self, asset: Assets) -> None:
+    def __init__(self, asset: Asset) -> None:
         self.asset = asset
 
     def create_access_info_with_account(self, ip: str, port: int, user_id: str, password: str) -> bool:
@@ -17,7 +17,7 @@ class SSHAccessInfoManager(object):
             return False
         return True
 
-    def create_access_info_with_pkey(self, ip: str, port: int, ssh_key: Secrets) -> bool:
+    def create_access_info_with_pkey(self, ip: str, port: int, ssh_key: Secret) -> bool:
         try:
             obj, created = SSHAccessInfo.objects.update_or_create(
                 asset=self.asset, ip=ip, port=port, ssh_key=ssh_key)
@@ -38,7 +38,7 @@ class SSHObject(object):
         if channel == None:
             try:
                 if self.ssh_info.ssh_key:
-                    secret = Secrets.objects.values(
+                    secret = Secret.objects.values(
                         'secret').get(id=self.ssh_info.ssh_key)
                     private_key = paramiko.rsakey.RSAKey.from_private_key(
                         StringIO(secret))

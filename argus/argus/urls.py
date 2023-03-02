@@ -21,6 +21,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from monitoring import views
+from django.views.generic import RedirectView
 
 router = routers.DefaultRouter()
 schema_view = get_schema_view(
@@ -34,6 +35,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path('', RedirectView.as_view(url='monitoring')),
     path('admin/', admin.site.urls),
     path('monitoring/', include('monitoring.urls')),
     path('common/', include('common.urls')),
