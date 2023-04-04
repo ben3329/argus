@@ -1,0 +1,42 @@
+{% load static %}
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap-icons/font/bootstrap-icons.css' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <title>Argus</title>
+    <style>
+        @media (min-width:768px) {
+            .card {
+                height: 650px;
+            }
+        }
+        a {
+            text-decoration: none;
+            color: black;
+        }
+        img {
+            height: 650px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row overflow-auto">     
+            <div class="col-6 min-vh-100 d-flex justify-content-center align-items-center">
+                <div class="card w-75">
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </div>
+            <div class="col-6 min-vh-100 d-flex justify-content-center align-items-center">
+                <img src="{% static 'images/logo2.png' %}" alt="main image">
+            </div>
+        </div>
+    </div>
+<script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+</body>
+</html>

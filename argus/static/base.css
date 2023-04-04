@@ -1,0 +1,58 @@
+/* Define variables */
+:root {
+  --color-mercury: #e8e8e8;
+  --color-river-bed: #404c58;
+  --color-nevada: #6d7278;
+  --color-boulder: #7c7c7c;
+}
+
+body {
+  background: #f9f9f9;  /* fallback for old browsers */
+}
+
+.separator {
+  margin: 3rem 0;
+  border-bottom: 1px dashed #fff;
+}
+
+.text-gray {
+  color: #5D7285;
+}
+
+.vertical-nav {
+  min-width: 17rem;
+  width: 17rem;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s;
+  z-index: 0;
+  overflow-x: hidden;
+  padding-top: 3.5rem;
+  background-color: #d3d3d3;
+}
+
+.nav-item {
+  height: 3rem;
+  display: flex;
+  align-items: center;
+}
+
+.navbar {
+  height: 3.5rem;
+  z-index: 1;
+}
+
+.page-content {
+  width: calc(100% - 17rem);
+  margin-left: 17rem;
+  padding-top: 4rem;
+  transition: all 0.4s;
+}
+
+.page-item.active .page-link {
+  background-color: var(--color-river-bed);
+  border-color: var(--color-river-bed);
+}

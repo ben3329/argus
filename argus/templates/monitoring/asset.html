@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load monitoring_filter %}
+{% block content %}
+{% url 'monitoring:asset-list' as main_api %}
+{% url 'monitoring:accesscredential-list' as access_credential_api%}
+<script>
+    var mainApi = "{{ main_api }}";
+    var accessCredentialApi = "{{ access_credential_api }}";
+</script>
+<div class="container">
+    <h3 class="border-bottom border-secondary">Asset</h3>
+</div>
+<div class="container">
+    <div class="d-flex justify-content-end">
+        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#createModal" id="createNewButton">
+            Create
+        </button>
+        <button id="deleteButton" class="btn btn-dark ms-2">
+            Delete
+        </button>
+    </div>
+    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="createModalLabel">Create Asset</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{{ main_api }}" id="formInModal">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <div class="row mb-3 mx-2">
+                            <div class="col-3">
+                                <label for="id_name" class="form-label">Name</label>
+                            </div>
+                            <div class="col-9">
+                                <input type="text" name="name" maxlength="31" class="form-control" required id="id_name">
+                                <div class="text-danger invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="row mb-3 mx-2">
+                            <div class="col-3">
+                                <label for="id_asset_type" class="form-label">Asset Type</label>
+                            </div>
+                            <div class="col-9">
+                                <select name="asset_type" class="form-control" id="id_asset_type">
+                                    <option value="linux" selected>Linux</option>
+                                    <option value="windows">Windows</option>
+                                </select>
+                                <div class="text-danger invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="row mb-3 mx-2">
+                            <div class="col-3">
+                                <label for="id_ip" class="form-label">IP</label>
+                            </div>
+                            <div class="col-9">
+                                <input type="text" name="ip" class="form-control" required id="id_ip">
+                                <div class="text-danger invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="row mb-3 mx-2">
+                            <div class="col-3">
+                                <label for="id_port" class="form-label">Port</label>
+                            </div>
+                            <div class="col-9">
+                                <input type="number" name="port" value="22" class="form-control" required id="id_port">
+                                <div class="text-danger invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="row mb-3 mx-2">
+                            <div class="col-3">
+                                <label for="id_access_credential" class="form-label">Access Credential</label>
+                            </div>
+                            <div class="col-9">
+                                <select name="access_credential" class="form-control" id="id_access_credential">
+                                    <option value="" selected>---------</option>
+                                </select>
+                                <div class="text-danger invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="row mb-3 mx-2">
+                            <div class="col-3">
+                                <label for="id_note" class="form-label">Note</label>
+                            </div>
+                            <div class="col-9">
+                                <textarea name="note" cols="40" rows="10" class="form-control" id="id_note"></textarea>
+                                <div class="text-danger invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger d-none" id="warningMessage"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-dark" id="createButton">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <table class="table border">
+        <thead>
+        <tr class="table-dark text-center">
+            <th style="width: 5%">
+                <input type="checkbox" id="check-all">
+            </th>
+            {% if user.is_staff %}
+            <th style="width: 7%">User</th>
+            {% endif %}
+            <th>Name</th>
+            <th>IP</th>
+            <th>Port</th>
+            <th>Asset Type</th>
+            <th>AccessCredential</th>
+            <th>Note</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% if data.results %}
+        {% for asset in data.results %}
+        <tr class="text-center">
+            <td>
+                <input type="checkbox" class="check-item" name="object-id" value="{{ asset.id }}">
+            </td>
+            {% if user.is_staff %}
+            <td>{{ asset.user_detail.username}}</td>
+            {% endif %}
+            {% if user.is_staff and user.username != asset.user_detail.username %}
+                    <td>{{ asset.name }}</td>
+            {% else %}
+                {% with access_credential_id=asset.access_credential|default:'' %}
+                    <td><a href="#" class="edit-asset" data-asset-name="{{ asset.name }}" data-asset-ip="{{ asset.ip }}" data-asset-port="{{ asset.port }}" data-asset-asset-type="{{ asset.asset_type }}" data-asset-access-credential="{{ access_credential_id }}" data-asset-note="{{ asset.note }}" data-asset-id="{{ asset.id }}">{{ asset.name }}</a></td>
+                {% endwith %}
+            {% endif %}
+            <td>{{ asset.ip }}</td>
+            <td>{{ asset.port }}</td>
+            <td>{{ asset.asset_type|display_asset_type }}</td>
+            {% if asset.access_credential_detail %}
+                <td>{{ asset.access_credential_detail.name }}</td>
+            {% else %}
+                <td>None</td>
+            {% endif %}
+            <td>{{ asset.note }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            {% if user.is_staff %}
+                <td colspan="8" class="text-center">No Asset</td>
+            {% else %}
+                <td colspan="7" class="text-center">No Asset</td>
+            {% endif %}
+        </tr>
+        {% endif %}
+        </tbody>
+    </table>
+    <ul class="pagination justify-content-center">
+        {% if data.links.previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ current|add:-1 }}">Previous</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" ariadisabled="true" href="#">Previous</a>
+        </li>
+        {% endif %}
+        {% for i in ""|rjust:data.total_pages %}
+        {% if forloop.counter >= current|add:-5 and forloop.counter <= current|add:5 %}
+        {% if forloop.counter == current %}
+        <li class="page-item active" aria-current="page">
+            <a class="page-link" href="?page={{ forloop.counter }}">{{ forloop.counter }}</a>
+        </li>
+        {% else %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ forloop.counter }}">{{ forloop.counter }}</a>
+        </li>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+        {% if data.links.next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ current|add:1 }}">Next</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" aria-disabled="true" href="#">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'asset.js' %}"></script>
+{% endblock %}

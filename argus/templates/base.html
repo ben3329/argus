@@ -1,0 +1,131 @@
+{% load static %}
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap-icons/font/bootstrap-icons.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'base.css' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <style>
+        a {
+            text-decoration: none;
+            color: black;
+        }
+    </style>
+    <title>Argus</title>
+</head>
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+        <img src="{% static 'images/logo2.png' %}" alt="logo" style="height: 2rem;" class="d-inline-block align-top">
+        Argus Monitoring System
+        </a>
+    </div>
+    <div class="ms-auto d-flex align-items-center">
+        <i class="bi bi-person"></i>
+        <span class="mx-2">{{ user.username }}</span>
+        <a href="{% url 'common:logout' %}" class="d-flex align-items-center">
+            <i class="bi bi-box-arrow-right"></i>
+            <span class="mx-2">Logout</span>
+        </a>
+    </div>
+</nav>
+{% with view_name=request.resolver_match.view_name %}
+<div class="vertical-nav" id="sidebar">
+    <ul class="nav flex-column mb-0">
+        <li class="nav-item" 
+            {% if view_name == 'monitoring:dashboard' %}
+                style="background-color: #5d7285"
+            {% endif %}
+        >
+            <a href="{% url 'monitoring:dashboard' %}"
+                class="nav-link {% if view_name == 'monitoring:dashboard' %} active {% else %} text-gray {% endif %}"
+                {% if view_name == 'monitoring:dashboard' %}
+                    aria-current="page" style="color: white"
+                {% endif %}>
+                Dashboard
+            </a>
+        </li>
+        <li class="nav-item" 
+            {% if view_name == 'monitoring:asset' %}
+                style="background-color: #5d7285"
+            {% endif %}
+        >
+            <a href="{% url 'monitoring:asset' %}"
+                class="nav-link {% if view_name == 'monitoring:asset' %} active {% else %} text-gray {% endif %}"
+                {% if view_name == 'monitoring:asset' %}
+                    aria-current="page" style="color: white"
+                {% endif %}>
+                Asset
+            </a>
+        </li>
+        <li class="nav-item" 
+            {% if view_name == 'monitoring:monitor' %}
+                style="background-color: #5d7285"
+            {% endif %}
+        >
+            <a href="{% url 'monitoring:monitor' %}"
+                class="nav-link {% if view_name == 'monitoring:monitor' %} active {% else %} text-gray {% endif %}"
+                {% if view_name == 'monitoring:monitor' %}
+                    aria-current="page" style="color: white"
+                {% endif %}>
+                Monitor
+            </a>
+        </li>
+        <li class="nav-item" 
+            {% if view_name == 'monitoring:access_credential' %}
+                style="background-color: #5d7285"
+            {% endif %}
+        >
+            <a href="{% url 'monitoring:access_credential' %}"
+                class="nav-link {% if view_name == 'monitoring:access_credential' %} active {% else %} text-gray {% endif %}"
+                {% if view_name == 'monitoring:access_credential' %}
+                    aria-current="page" style="color: white"
+                {% endif %}>
+                Access Credential
+            </a>
+        </li>
+        <li class="nav-item" 
+            {% if view_name == 'monitoring:script' %}
+                style="background-color: #5d7285"
+            {% endif %}
+        >
+            <a href="{% url 'monitoring:script' %}"
+                class="nav-link {% if view_name == 'monitoring:script' %} active {% else %} text-gray {% endif %}"
+                {% if view_name == 'monitoring:script' %}
+                    aria-current="page" style="color: white"
+                {% endif %}>
+                Script
+            </a>
+        </li>
+        <li class="nav-item" 
+            {% if view_name == 'monitoring:config' %}
+                style="background-color: #5d7285"
+            {% endif %}
+        >
+            <a href="{% url 'monitoring:config' %}"
+                class="nav-link {% if view_name == 'monitoring:config' %} active {% else %} text-gray {% endif %}"
+                {% if view_name == 'monitoring:config' %}
+                    aria-current="page" style="color: white"
+                {% endif %}>
+                Config
+            </a>
+        </li>
+    </ul>
+</div>
+{% endwith %}
+<div class="page-content container mt-4" id="content">
+{% block content %}
+{% endblock %}
+</div>
+<script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'jquery/dist/jquery.js' %}"></script>
+<script src="{% static 'base.js' %}"></script>
+{% block extra_js %}
+{% endblock %}
+</body>
+</html>

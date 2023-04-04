@@ -1,0 +1,40 @@
+version: '3'
+services:
+  database:
+    image: mysql:8.0.31
+    container_name: database
+    environment:
+      MYSQL_ROOT_PASSWORD: admin_password
+      MYSQL_DATABASE: monitoring
+    ports:
+      - 3306:3306
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./database-data:/var/lib/mysql
+    networks:
+      internal_network:
+        ipv4_address: 172.30.0.2
+  app:
+    image: argus:latest
+    container_name: app
+    environment:
+      DJANGO_SUPERUSER_USERNAME: root
+      DJANGO_SUPERUSER_PASSWORD: admin_password
+      MYSQL_ROOT_PASSWORD: admin_password
+      DJANGO_SUPERUSER_EMAIL: admin@admin.com
+    ports:
+      - 80:8080
+    volumes:
+      - ./argus:/app
+    depends_on:
+      - database
+    networks:
+      internal_network:
+        ipv4_address: 172.30.0.3
+networks:
+  internal_network:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

@@ -1,0 +1,36 @@
+{% extends "base_auth.html" %}
+{% block content %}
+<div class="card-body mx-3">
+    <p class="card-text my-4" style="font-size: 24px;">Welcome!</p>
+    <h3 class="card-title">Sign in to</h3>
+    <p class="card-text mb-5">Argus monitoring system</p>
+    <form method="post" action="{% url 'common:login' %}">
+        {% csrf_token %}
+        {% include "form_errors.html" %}
+        <div class="mb-4">
+            <label for="username" class="mb-1">User name</label>
+            <input type="text" class="form-control" name="username" id="username"
+                value="{{ form.username.value|default_if_none:'' }}">
+        </div>
+        <div class="mb-4">
+            <label for="password" class="mb-1">Password</label>
+            <input type="password" class="form-control" name="password" id="password"
+                value="{{ form.password.value|default_if_none:'' }}">
+        </div>
+        <div class="form-group d-flex justify-content-between my-3">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="remember-me">
+                <label class="form-check-label" for="remember-me">Remember Me</label>
+            </div>
+            <a href="{% url 'common:password_reset' %}">Forgot Password?</a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-dark w-100 my-3">
+            <div class="d-inline-block my-1">Login</div>
+        </button>
+    </form>
+</div>
+<div class="card-body text-center">
+    Don't have an account? 
+    <a href="{% url 'common:signup' %}" style="font-weight: bold;">Register</a>
+</div>
+{% endblock %}
