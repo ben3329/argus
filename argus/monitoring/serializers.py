@@ -91,10 +91,10 @@ class AccessCredentialSerializer(serializers.ModelSerializer):
 
 
 class ScriptSerializer(serializers.ModelSerializer):
+    user_detail = UserSerializer(source='user', read_only=True)
     class Meta:
         model = Script
-        fields = ['user', 'name', 'language',
-                  'code', 'authority', 'output_type']
+        fields = ['id', 'user', 'user_detail', 'name', 'note']
 
 
 class MonitoringSerializer(serializers.ModelSerializer):

@@ -13,6 +13,7 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.db.models import Q, Case, When
 
 from .engine import *
 from .serializers import *
@@ -196,6 +197,25 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
         serializer = AccessCredentialSerializerSimple(access_credentials, many=True)
         return Response(serializer.data)
 
+class ScriptViewSet(mixins.ListModelMixin,
+                    GenericViewSet):
+    queryset = Script.objects.all()
+    serializer_class = ScriptSerializer
+    pagination_class = Pagination
+    renderer_classes = [JSONRenderer]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = self.queryset.filter(
+            Q(user=user) | Q(authority=AuthorityChoices.public)).order_by(
+                Case(When(user=user, then=0), default=1), 'user', '-update_date'
+            )
+        return queryset
+    
+    @swagger_auto_schema(responses=script_list_api_response)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 def authorize_api(request: HttpRequest) -> requests.Session:
     user = request.user

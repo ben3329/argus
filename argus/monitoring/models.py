@@ -57,28 +57,36 @@ class Asset(models.Model):
         ]
 
 
+class LanguageChoices(models.TextChoices):
+    python3 = 'python3'
+    python2 = 'python2'
+    shell = 'shell'
+
+
+class AuthorityChoices(models.TextChoices):
+    public = 'public'
+    private = 'private'
+
+
+class OutputTypeChoices(models.TextChoices):
+    csv = 'csv'
+    json = 'json'
+    none = 'none'
+
+
 class Script(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=31)
-    create_date = models.DateTimeField(auto_now=True)
-
-    class Language(models.TextChoices):
-        python3 = 'python3'
-        python2 = 'python2'
-        bash = 'bash'
-    language = models.CharField(choices=Language.choices, max_length=15)
+    language = models.CharField(choices=LanguageChoices.choices, max_length=15)
     code = models.TextField()
-
-    class Authority(models.TextChoices):
-        public = 'public'
-        private = 'private'
-    authority = models.CharField(choices=Authority.choices, max_length=15)
-
-    class OutputType(models.TextChoices):
-        csv = 'csv'
-        json = 'json'
-        none = 'none'
-    output_type = models.CharField(choices=OutputType.choices, max_length=15)
+    authority = models.CharField(
+        choices=AuthorityChoices.choices, max_length=15)
+    output_type = models.CharField(
+        choices=OutputTypeChoices.choices, max_length=15)
+    note = models.TextField(null=True, blank=True)
+    create_date = models.DateTimeField(auto_now=True)
+    update_date = models.DateTimeField(auto_now=True)
+    revision = models.IntegerField(default=1)
 
 
 class Monitor(models.Model):
