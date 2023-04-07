@@ -207,3 +207,38 @@ asset_update_api_response = {
         )
     )
 }
+
+
+script_list_api_response_properties = {
+    'id': openapi.Schema(
+        type=openapi.TYPE_INTEGER, description="The unique identifier of the script"),
+    'user': openapi.Schema(
+        type=openapi.TYPE_INTEGER, description="The ID of the user that owns the script"),
+    'user_detail': openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties=user_detail_properties),
+    'name': openapi.Schema(type=openapi.TYPE_STRING,
+                           description="A name of script"),
+    'note': openapi.Schema(
+        type=openapi.TYPE_STRING,
+        description="Additional notes about the script"),
+}
+
+script_list_api_response = {
+    200: openapi.Response(
+        description='List of Access Credentail',
+        schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                **pagination_properties,
+                'results': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties=script_list_api_response_properties
+                    )
+                )
+            }
+        )
+    )
+}
