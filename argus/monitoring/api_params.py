@@ -226,7 +226,7 @@ script_list_api_response_properties = {
 
 script_list_api_response = {
     200: openapi.Response(
-        description='List of Access Credentail',
+        description='List of Script',
         schema=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={

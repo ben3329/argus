@@ -502,3 +502,13 @@ class ScriptViewSetTests(APITestCase):
         data = response.json()
         self.assertEqual(
             script_list_api_response_properties.keys(), data['results'][0].keys())
+
+    def test_script_list_get_pagination(self):
+        cnt = 50
+        page_size = 10
+        self.create_script(self.super_user, AuthorityChoices.private.value, cnt)
+        url = reverse('monitoring:script-list')
+        response = self.client.get(url)
+        data = response.json()
+        self.assertEqual(len(data['results']), page_size)
+        self.assertEqual(data['total_pages'], math.ceil(cnt/page_size))
