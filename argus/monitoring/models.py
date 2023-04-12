@@ -76,17 +76,31 @@ class OutputTypeChoices(models.TextChoices):
 
 class Script(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=31)
-    language = models.CharField(choices=LanguageChoices.choices, max_length=15)
-    code = models.TextField()
+    name = models.CharField(
+        max_length=31, help_text="The name of the script (max 31 characters).")
+    language = models.CharField(
+        choices=LanguageChoices.choices, max_length=15, help_text="The programming language of the script.")
+    code = models.TextField(help_text="The code of the script.")
     authority = models.CharField(
-        choices=AuthorityChoices.choices, max_length=15)
+        choices=AuthorityChoices.choices, max_length=15, help_text="The authority level of the script.")
     output_type = models.CharField(
-        choices=OutputTypeChoices.choices, max_length=15)
-    note = models.TextField(null=True, blank=True)
-    create_date = models.DateTimeField(auto_now=True)
-    update_date = models.DateTimeField(auto_now=True)
-    revision = models.IntegerField(default=1)
+        choices=OutputTypeChoices.choices, max_length=15, help_text="The output type of the script.")
+    note = models.TextField(
+        null=True, blank=True, help_text="Additional notes about the script (optional).")
+    create_date = models.DateTimeField(
+        auto_now=True, help_text="The date and time when the script was created.")
+    update_date = models.DateTimeField(
+        auto_now=True, help_text="The date and time when the script was last updated.")
+    revision = models.IntegerField(
+        default=1, help_text="The revision number of the script.")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'name'],
+                name='user_script_name_unique_constraints',
+            )
+        ]
 
 
 class Monitor(models.Model):
