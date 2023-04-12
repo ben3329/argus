@@ -18,7 +18,7 @@ from django.db.models import Q, Case, When
 from .engine import *
 from .serializers import *
 from .models import *
-from .api_params import *
+from .swagger_schema import *
 
 import requests
 import logging
