@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Asset, AccessCredential, Script, Monitor
+from .models import *
 from django.contrib.auth.models import User
 
 
@@ -8,16 +8,20 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email']
 
+
 class AccessCredentialSerializerSimple(serializers.ModelSerializer):
     class Meta:
         model = AccessCredential
         fields = ['id', 'name', 'access_type']
 
+
 class AssetSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     user_detail = UserSerializer(source='user', read_only=True)
-    access_credential = serializers.PrimaryKeyRelatedField(queryset=AccessCredential.objects.all())
-    access_credential_detail = AccessCredentialSerializerSimple(source='access_credential', read_only=True)
+    access_credential = serializers.PrimaryKeyRelatedField(
+        queryset=AccessCredential.objects.all())
+    access_credential_detail = AccessCredentialSerializerSimple(
+        source='access_credential', read_only=True)
 
     class Meta:
         model = Asset
@@ -34,7 +38,7 @@ class AssetSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Asset with this name already exists.")
         return value
-    
+
     def validate_access_credential(self, value):
         user = self.initial_data.get('user')
         try:
@@ -52,7 +56,7 @@ class AccessCredentialSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessCredential
         fields = ['id', 'user', 'name', 'access_type',
-                  'username', 'password', 'secret', 'note', 
+                  'username', 'password', 'secret', 'note',
                   'create_date']
 
     def validate_name(self, value):
@@ -65,7 +69,7 @@ class AccessCredentialSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "AccessCredential with this name already exists.")
         return value
-    
+
     def validate_access_type(self, value):
         if ('_id_password') in value:
             if self.initial_data.get('username') == None or self.initial_data.get('password') == None:
@@ -92,6 +96,7 @@ class AccessCredentialSerializer(serializers.ModelSerializer):
 
 class ScriptSerializer(serializers.ModelSerializer):
     user_detail = UserSerializer(source='user', read_only=True)
+
     class Meta:
         model = Script
         fields = ['id', 'user', 'user_detail', 'name', 'note']

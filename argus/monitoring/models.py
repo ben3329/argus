@@ -8,8 +8,10 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 class AccessType(models.TextChoices):
     ssh_id_password = 'ssh_id_password', 'SSH ID Password'
     ssh_private_key = 'ssh_private_key', 'SSH Private Key'
+
     def __str__(self) -> str:
         return self.value[1]
+
 
 class AssetType(models.TextChoices):
     linux = 'linux', 'Linux'
@@ -19,7 +21,8 @@ class AssetType(models.TextChoices):
 class AccessCredential(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=31)
-    access_type = models.CharField(choices=AccessType.choices, max_length=31, default='ssh_id_password')
+    access_type = models.CharField(
+        choices=AccessType.choices, max_length=31, default='ssh_id_password')
     username = models.CharField(max_length=31, null=True, blank=True)
     password = models.CharField(max_length=31, null=True, blank=True)
     secret = models.TextField(null=True, blank=True)
@@ -33,6 +36,7 @@ class AccessCredential(models.Model):
                 name='user_access_credential_name_unique_constraints',
             )
         ]
+
     def __str__(self):
         return self.name
 
@@ -43,8 +47,10 @@ class Asset(models.Model):
     ip = models.GenericIPAddressField()
     port = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(
         65535)], default=22)  # possible ssh port range is 1 ~ 65535
-    asset_type = models.CharField(choices=AssetType.choices, max_length=15, default='linux')
-    access_credential = models.ForeignKey(AccessCredential, on_delete=models.SET_NULL, null=True, blank=True)
+    asset_type = models.CharField(
+        choices=AssetType.choices, max_length=15, default='linux')
+    access_credential = models.ForeignKey(
+        AccessCredential, on_delete=models.SET_NULL, null=True, blank=True)
     note = models.TextField(null=True, blank=True)
     create_date = models.DateTimeField(auto_now=True)
 
@@ -119,4 +125,5 @@ class Monitor(models.Model):
         1)], default=10, help_text="interval time as seconds.")
     reporting = models.BooleanField(default=False)
     report_time = models.TimeField(null=True, blank=True)
-    report_receiver = models.JSONField(null=True, blank=True, help_text="['user1', 'user2', ...]")
+    report_receiver = models.JSONField(
+        null=True, blank=True, help_text="['user1', 'user2', ...]")

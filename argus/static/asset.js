@@ -1,20 +1,20 @@
-function setAccessCredential(select_id=-1){
+function setAccessCredential(select_id = -1) {
     $.ajax({
-        url: accessCredentialApi+'simple',
+        url: accessCredentialApi + 'simple',
         type: 'GET',
-        beforeSend: function(xhr) {
+        beforeSend: function (xhr) {
             xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
         },
         success: function (response) {
             var accessCredentials = response;
             var select = $('#id_access_credential');
             select.empty();
-            if (select_id == ''){
+            if (select_id == '') {
                 var option = $('<option>').val("").text("---------");
                 select.append(option);
                 option.attr('selected', true);
             }
-            $.each(accessCredentials, function(index, accessCredential) {
+            $.each(accessCredentials, function (index, accessCredential) {
                 var option = $('<option>').val(accessCredential.id).text(accessCredential.name);
                 if (select_id == accessCredential.id) {
                     option.attr('selected', true);
@@ -28,7 +28,7 @@ function setAccessCredential(select_id=-1){
     });
 }
 
-$('#createNewButton').on('click', function(e) {
+$('#createNewButton').on('click', function (e) {
     setAccessCredential();
     e.preventDefault();
     $('#formInModal').attr('action', mainApi);

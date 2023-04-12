@@ -1,4 +1,4 @@
-from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.viewsets import GenericViewSet
 from rest_framework import mixins
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.renderers import JSONRenderer
@@ -23,7 +23,6 @@ from .api_params import *
 import requests
 import logging
 from copy import deepcopy
-from functools import partial
 logger = logging.getLogger(__name__)
 
 
@@ -41,6 +40,7 @@ class Pagination(PageNumberPagination):
             'results': data
         })
 
+
 class AssetViewSet(mixins.CreateModelMixin,
                    mixins.ListModelMixin,
                    mixins.UpdateModelMixin,
@@ -57,11 +57,12 @@ class AssetViewSet(mixins.CreateModelMixin,
             if user.is_superuser:
                 queryset = self.queryset.order_by('-create_date')
             else:
-                queryset = self.queryset.filter(user=user).order_by('-create_date')
+                queryset = self.queryset.filter(
+                    user=user).order_by('-create_date')
         else:
             queryset = Asset.objects.none()
         return queryset
-    
+
     @swagger_auto_schema(responses=asset_list_api_response)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
@@ -74,7 +75,7 @@ class AssetViewSet(mixins.CreateModelMixin,
         ),
         responses=asset_create_api_response
     )
-    def create(self, request:Request, *args, **kwargs) -> Response:
+    def create(self, request: Request, *args, **kwargs) -> Response:
         data = deepcopy(request.data)
         data['user'] = request.user.id
         serializer = self.get_serializer(data=data)
@@ -83,7 +84,7 @@ class AssetViewSet(mixins.CreateModelMixin,
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-    
+
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -92,7 +93,7 @@ class AssetViewSet(mixins.CreateModelMixin,
         )
     )
     @action(detail=False, methods=['delete'], url_path='delete_bulk')
-    def delete_bulk(self, request:Request) -> Response:
+    def delete_bulk(self, request: Request) -> Response:
         ids = request.data.getlist('ids[]')
         if request.user.is_superuser:
             self.queryset.filter(id__in=ids).delete()
@@ -108,7 +109,7 @@ class AssetViewSet(mixins.CreateModelMixin,
         ),
         responses=asset_create_api_response
     )
-    def update(self, request:Request, *args, **kwargs) -> Response:
+    def update(self, request: Request, *args, **kwargs) -> Response:
         data = deepcopy(request.data)
         data['user'] = request.user.id
 
@@ -124,7 +125,7 @@ class AssetViewSet(mixins.CreateModelMixin,
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
-    
+
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -135,7 +136,6 @@ class AssetViewSet(mixins.CreateModelMixin,
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
-    
 
 
 class AccessCredentialViewSet(mixins.CreateModelMixin,
@@ -152,7 +152,7 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
         queryset = self.queryset.filter(
             user=user).order_by('-create_date')
         return queryset
-    
+
     @swagger_auto_schema(responses=access_credential_list_api_response)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
@@ -165,7 +165,7 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
         ),
         responses=access_credential_create_api_response
     )
-    def create(self, request:Request, *args, **kwargs) -> Response:
+    def create(self, request: Request, *args, **kwargs) -> Response:
         data = deepcopy(request.data)
         data['user'] = request.user.id
         serializer = self.get_serializer(data=data)
@@ -183,19 +183,21 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
         )
     )
     @action(detail=False, methods=['delete'], url_path='delete_bulk')
-    def delete_bulk(self, request:Request) -> Response:
+    def delete_bulk(self, request: Request) -> Response:
         ids = request.data.getlist('ids[]')
         self.queryset.filter(id__in=ids, user=request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(responses=access_credential_simple_api_response)
     @action(detail=False, methods=['get'], url_path='simple')
-    def list_simple(self, request:Request) -> Response:
+    def list_simple(self, request: Request) -> Response:
         # pagination 없이 목록 전부 일부 필드만 가져옴
         user = request.user
         access_credentials = self.queryset.filter(user=user)
-        serializer = AccessCredentialSerializerSimple(access_credentials, many=True)
+        serializer = AccessCredentialSerializerSimple(
+            access_credentials, many=True)
         return Response(serializer.data)
+
 
 class ScriptViewSet(mixins.ListModelMixin,
                     mixins.CreateModelMixin,
@@ -219,14 +221,14 @@ class ScriptViewSet(mixins.ListModelMixin,
         queryset = self.queryset.filter(
             Q(user=user) | Q(authority=AuthorityChoices.public)).order_by(
                 Case(When(user=user, then=0), default=1), 'user', '-update_date'
-            )
+        )
         return queryset
-    
+
     @swagger_auto_schema(responses=script_list_api_response)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    def create(self, request:Request, *args, **kwargs) -> Response:
+    def create(self, request: Request, *args, **kwargs) -> Response:
         data = deepcopy(request.data)
         data['user'] = request.user.id
         serializer = self.get_serializer(data=data)
@@ -235,7 +237,7 @@ class ScriptViewSet(mixins.ListModelMixin,
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-        
+
 
 def authorize_api(request: HttpRequest) -> requests.Session:
     user = request.user
@@ -244,10 +246,12 @@ def authorize_api(request: HttpRequest) -> requests.Session:
     session.headers.update({'Authorization': f'Token {token}'})
     return session
 
+
 @login_required
 def dashboard(request):
     context = {'user': request.user}
     return render(request, 'monitoring/dashboard.html', context)
+
 
 @login_required
 def asset(request: HttpRequest) -> HttpResponse:
@@ -276,7 +280,8 @@ def monitor(request):
 def access_credential(request: HttpRequest) -> HttpResponse:
     page_number = request.GET.get('page', 1)
     params = {'page': page_number}
-    api_url = 'http://localhost:8080' + reverse('monitoring:accesscredential-list')
+    api_url = 'http://localhost:8080' + \
+        reverse('monitoring:accesscredential-list')
     session = authorize_api(request)
     response = session.get(api_url, params=params)
 

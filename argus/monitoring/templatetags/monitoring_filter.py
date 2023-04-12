@@ -40,6 +40,7 @@ def display_access_type(value):
             return choice[1]
     return ''
 
+
 @register.filter
 def display_asset_type(value):
     for choice in AssetType.choices:
