@@ -97,7 +97,7 @@ access_credential_create_api_response = {
         description='The created access credential object with its properties',
         schema=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            properties=access_credential_list_api_response_properties
+            properties=access_credential_create_api_properties
         )
     )
 }
@@ -108,7 +108,8 @@ access_credential_simple_api_response_properties = {
     'name': openapi.Schema(type=openapi.TYPE_STRING,
                            description="A name of access credential"),
     'access_type': openapi.Schema(type=openapi.TYPE_STRING,
-                                  enum=[choice.value for choice in AccessTypeChoices],
+                                  enum=[
+                                      choice.value for choice in AccessTypeChoices],
                                   default=AccessTypeChoices.ssh_id_password.value,
                                   description="A access type of credential."),
 }
@@ -141,7 +142,8 @@ asset_list_api_response_properties = {
                            type=openapi.TYPE_INTEGER, default=22,
                            description="The port number of the asset for access"),
     'asset_type': openapi.Schema(type=openapi.TYPE_STRING,
-                                 enum=[choice.value for choice in AssetTypeChoices],
+                                 enum=[
+                                     choice.value for choice in AssetTypeChoices],
                                  default=AssetTypeChoices.linux.value,
                                  description="The type of asset, like an operating system"),
     'access_credential': openapi.Schema(
@@ -193,7 +195,7 @@ asset_create_api_response = {
         description='The created asset object with its properties',
         schema=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            properties=asset_list_api_response_properties
+            properties=asset_create_api_properties
         )
     )
 }
@@ -203,7 +205,7 @@ asset_update_api_response = {
         description='The updated asset object with its properties',
         schema=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            properties=asset_list_api_response_properties
+            properties=asset_create_api_properties
         )
     )
 }

@@ -46,10 +46,20 @@ class AssetViewSet(mixins.CreateModelMixin,
                    mixins.UpdateModelMixin,
                    GenericViewSet):
     queryset = Asset.objects.all()
-    serializer_class = AssetSerializer
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        match self.action:
+            case 'list':
+                return AssetListSerializer
+            case 'create':
+                return AssetCreateSerializer
+            case 'update' | 'partial_update':
+                return AssetUpdateSerializer
+            case _:
+                return None
 
     def get_queryset(self):
         user = self.request.user
@@ -142,10 +152,22 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
                               mixins.ListModelMixin,
                               GenericViewSet):
     queryset = AccessCredential.objects.all()
-    serializer_class = AccessCredentialSerializer
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        match self.action:
+            case 'list':
+                return AccessCredentialListSerializer
+            case 'create':
+                return AccessCredentialCreateSerializer
+            case 'update' | 'partial_update':
+                return AccessCredentialUpdateSerializer
+            case 'list_simple':
+                return AccessCredentialSerializerSimple
+            case _:
+                return None
 
     def get_queryset(self):
         user = self.request.user
@@ -192,10 +214,8 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
     @action(detail=False, methods=['get'], url_path='simple')
     def list_simple(self, request: Request) -> Response:
         # pagination 없이 목록 전부 일부 필드만 가져옴
-        user = request.user
-        access_credentials = self.queryset.filter(user=user)
-        serializer = AccessCredentialSerializerSimple(
-            access_credentials, many=True)
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
 
