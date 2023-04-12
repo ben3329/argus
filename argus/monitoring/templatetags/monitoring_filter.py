@@ -1,6 +1,6 @@
 from django import template
 from django.utils.safestring import mark_safe
-from monitoring.models import AccessType, AssetType
+from monitoring.models import AccessTypeChoices, AssetTypeChoices
 
 register = template.Library()
 
@@ -35,7 +35,7 @@ def add_class_if(field, css_class):
 
 @register.filter
 def display_access_type(value):
-    for choice in AccessType.choices:
+    for choice in AccessTypeChoices.choices:
         if choice[0] == value:
             return choice[1]
     return ''
@@ -43,7 +43,7 @@ def display_access_type(value):
 
 @register.filter
 def display_asset_type(value):
-    for choice in AssetType.choices:
+    for choice in AssetTypeChoices.choices:
         if choice[0] == value:
             return choice[1]
     return ''
