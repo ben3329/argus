@@ -10,7 +10,7 @@ class AccessCredentialViewSetTests(APITestCase):
     def create_access_credential(self, user: User, cnt: int = 10):
         for i in range(cnt):
             q = AccessCredential(user=user, name=f'{user.username}test{str(i)}',
-                                 access_type=AccessType.ssh_id_password,
+                                 access_type=AccessTypeChoices.ssh_id_password,
                                  username='root', password='qwer1234')
             q.save()
 
@@ -62,7 +62,7 @@ class AccessCredentialViewSetTests(APITestCase):
         url = reverse('monitoring:accesscredential-list')
         data = {
             'name': 'test',
-            'access_type': AccessType.ssh_id_password.value,
+            'access_type': AccessTypeChoices.ssh_id_password.value,
             'username': 'root',
             'password': 'passwd'
         }
@@ -73,7 +73,7 @@ class AccessCredentialViewSetTests(APITestCase):
         url = reverse('monitoring:accesscredential-list')
         data = {
             'name': 'test',
-            'access_type': AccessType.ssh_id_password.value,
+            'access_type': AccessTypeChoices.ssh_id_password.value,
             'username': '',
             'password': ''
         }
@@ -84,7 +84,7 @@ class AccessCredentialViewSetTests(APITestCase):
         url = reverse('monitoring:accesscredential-list')
         data = {
             'name': 'test',
-            'access_type': AccessType.ssh_id_password.value,
+            'access_type': AccessTypeChoices.ssh_id_password.value,
             'secret': 'asdfasdf'
         }
         response = self.client.post(url, data=data)
@@ -94,7 +94,7 @@ class AccessCredentialViewSetTests(APITestCase):
         url = reverse('monitoring:accesscredential-list')
         data = {
             'name': 'test',
-            'access_type': AccessType.ssh_id_password.value,
+            'access_type': AccessTypeChoices.ssh_id_password.value,
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -103,7 +103,7 @@ class AccessCredentialViewSetTests(APITestCase):
         url = reverse('monitoring:accesscredential-list')
         data = {
             'name': 'test',
-            'access_type': AccessType.ssh_private_key.value,
+            'access_type': AccessTypeChoices.ssh_private_key.value,
             'secret': 'qwerqwer'
         }
         response = self.client.post(url, data=data)
@@ -113,7 +113,7 @@ class AccessCredentialViewSetTests(APITestCase):
         url = reverse('monitoring:accesscredential-list')
         data = {
             'name': 'test',
-            'access_type': AccessType.ssh_private_key.value,
+            'access_type': AccessTypeChoices.ssh_private_key.value,
             'secret': ''
         }
         response = self.client.post(url, data=data)
@@ -123,7 +123,7 @@ class AccessCredentialViewSetTests(APITestCase):
         url = reverse('monitoring:accesscredential-list')
         data = {
             'name': 'test',
-            'access_type': AccessType.ssh_private_key.value,
+            'access_type': AccessTypeChoices.ssh_private_key.value,
             'username': 'root',
             'password': 'passwd'
         }
@@ -134,7 +134,7 @@ class AccessCredentialViewSetTests(APITestCase):
         url = reverse('monitoring:accesscredential-list')
         data = {
             'name': 'test',
-            'access_type': AccessType.ssh_private_key.value,
+            'access_type': AccessTypeChoices.ssh_private_key.value,
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

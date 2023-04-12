@@ -5,7 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 # Create your models here.
 
 
-class AccessType(models.TextChoices):
+class AccessTypeChoices(models.TextChoices):
     ssh_id_password = 'ssh_id_password', 'SSH ID Password'
     ssh_private_key = 'ssh_private_key', 'SSH Private Key'
 
@@ -13,7 +13,7 @@ class AccessType(models.TextChoices):
         return self.value[1]
 
 
-class AssetType(models.TextChoices):
+class AssetTypeChoices(models.TextChoices):
     linux = 'linux', 'Linux'
     windows = 'windows', 'Windows'
 
@@ -22,7 +22,7 @@ class AccessCredential(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=31)
     access_type = models.CharField(
-        choices=AccessType.choices, max_length=31, default='ssh_id_password')
+        choices=AccessTypeChoices.choices, max_length=31, default='ssh_id_password')
     username = models.CharField(max_length=31, null=True, blank=True)
     password = models.CharField(max_length=31, null=True, blank=True)
     secret = models.TextField(null=True, blank=True)
@@ -48,7 +48,7 @@ class Asset(models.Model):
     port = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(
         65535)], default=22)  # possible ssh port range is 1 ~ 65535
     asset_type = models.CharField(
-        choices=AssetType.choices, max_length=15, default='linux')
+        choices=AssetTypeChoices.choices, max_length=15, default='linux')
     access_credential = models.ForeignKey(
         AccessCredential, on_delete=models.SET_NULL, null=True, blank=True)
     note = models.TextField(null=True, blank=True)

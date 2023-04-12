@@ -43,8 +43,8 @@ access_credential_list_api_response_properties = {
         description="The name of the access credential"),
     'access_type': openapi.Schema(
         type=openapi.TYPE_STRING,
-        enum=[choice.value for choice in AccessType],
-        default=AccessType.ssh_id_password.value,
+        enum=[choice.value for choice in AccessTypeChoices],
+        default=AccessTypeChoices.ssh_id_password.value,
         description="A access type of credential."),
     'username': openapi.Schema(
         type=openapi.TYPE_STRING,
@@ -108,8 +108,8 @@ access_credential_simple_api_response_properties = {
     'name': openapi.Schema(type=openapi.TYPE_STRING,
                            description="A name of access credential"),
     'access_type': openapi.Schema(type=openapi.TYPE_STRING,
-                                  enum=[choice.value for choice in AccessType],
-                                  default=AccessType.ssh_id_password.value,
+                                  enum=[choice.value for choice in AccessTypeChoices],
+                                  default=AccessTypeChoices.ssh_id_password.value,
                                   description="A access type of credential."),
 }
 
@@ -141,8 +141,8 @@ asset_list_api_response_properties = {
                            type=openapi.TYPE_INTEGER, default=22,
                            description="The port number of the asset for access"),
     'asset_type': openapi.Schema(type=openapi.TYPE_STRING,
-                                 enum=[choice.value for choice in AssetType],
-                                 default=AssetType.linux.value,
+                                 enum=[choice.value for choice in AssetTypeChoices],
+                                 default=AssetTypeChoices.linux.value,
                                  description="The type of asset, like an operating system"),
     'access_credential': openapi.Schema(
         type=openapi.TYPE_INTEGER,

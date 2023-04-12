@@ -22,7 +22,7 @@ class AssetViewSetTests(APITestCase):
         self.super_user = User.objects.get(username='admin')
         self.admin_cred = AccessCredential(
             user=self.super_user, name=f'{self.super_user.username}-id-password',
-            access_type=AccessType.ssh_id_password,
+            access_type=AccessTypeChoices.ssh_id_password,
             username='root', password='qwer1234')
         self.admin_cred.save()
 
@@ -31,7 +31,7 @@ class AssetViewSetTests(APITestCase):
         self.test_user = User.objects.get(username='test')
         self.test_cred = AccessCredential(
             user=self.test_user, name=f'{self.test_user.username}-id-password',
-            access_type=AccessType.ssh_id_password,
+            access_type=AccessTypeChoices.ssh_id_password,
             username='root', password='qwer1234')
         self.test_cred.save()
 
