@@ -248,6 +248,14 @@ class ScriptViewSet(mixins.ListModelMixin,
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=script_create_api_required_properties,
+            properties=script_create_api_properties,
+        ),
+        responses=script_create_api_response
+    )
     def create(self, request: Request, *args, **kwargs) -> Response:
         data = deepcopy(request.data)
         data['user'] = request.user.id
