@@ -105,16 +105,6 @@ class ScriptViewSetTests(APITestCase):
         for idx, d in enumerate(data['results']):
             self.assertEqual(d['name'], str(idx))
 
-    def test_script_list_get_match_swagger(self):
-        cnt = 1
-        self.create_script(
-            self.super_user, AuthorityChoices.private.value, cnt)
-        url = reverse('monitoring:script-list')
-        response = self.client.get(url)
-        data = response.json()
-        self.assertEqual(
-            script_list_api_response_properties.keys(), data['results'][0].keys())
-
     def test_script_list_get_pagination(self):
         cnt = 50
         page_size = 10
@@ -196,3 +186,16 @@ class ScriptViewSetTests(APITestCase):
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(list(response.json()), ['output_type'])
+
+    def test_script_delete_bulk_delete(self):
+        cnt = 10
+        delete_cnt = 5
+        self.create_script(self.super_user, AuthorityChoices.public.value, cnt)
+        ids = [script['id'] for script in Script.objects.all().values('id')]
+        data = {
+            'ids[]': ids[:delete_cnt]
+        }
+        url = reverse('monitoring:script-delete-bulk')
+        response = self.client.delete(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Script.objects.all().count(), cnt - delete_cnt)

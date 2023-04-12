@@ -266,6 +266,12 @@ class ScriptViewSet(mixins.ListModelMixin,
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    @action(detail=False, methods=['delete'], url_path='delete_bulk')
+    def delete_bulk(self, request: Request) -> Response:
+        ids = request.data.getlist('ids[]')
+        self.queryset.filter(id__in=ids, user=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 def authorize_api(request: HttpRequest) -> requests.Session:
     user = request.user
