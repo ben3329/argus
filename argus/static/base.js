@@ -13,7 +13,7 @@ function getCookie(name) {
     return cookieValue;
 }
 
-$('#createNewButton').on('click', function(e) {
+$('#createNewButton').on('click', function (e) {
     e.preventDefault();
     $('#formInModal').attr('action', mainApi);
     $('#formInModal').attr('method', 'post');
@@ -30,7 +30,7 @@ $(document).ready(function () {
             url: form.attr('action'),
             type: form.attr('method'),
             data: form.serialize(),
-            beforeSend: function(xhr) {
+            beforeSend: function (xhr) {
                 if (this.type == 'PUT') {
                     xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
                 }
@@ -52,14 +52,14 @@ $(document).ready(function () {
     });
 });
 
-$(document).ready(function() {
+$(document).ready(function () {
     const checkboxes = $('[name="object-id"]');
     const checkAllCheckbox = $('#check-all');
     const deleteButton = $('#deleteButton');
-    
+
     function updateDeleteButton() {
         let checked = false;
-        checkboxes.each(function() {
+        checkboxes.each(function () {
             if (this.checked) {
                 checked = true;
                 return false;
@@ -70,7 +70,7 @@ $(document).ready(function() {
 
     function updateCheckAllCheckbox() {
         let allChecked = true;
-        checkboxes.each(function() {
+        checkboxes.each(function () {
             if (!this.checked) {
                 allChecked = false;
                 return false;
@@ -78,23 +78,23 @@ $(document).ready(function() {
         });
         checkAllCheckbox.prop('checked', allChecked);
     }
-    
+
     updateDeleteButton();
     updateCheckAllCheckbox();
-    
-    checkboxes.on('change', function() {
+
+    checkboxes.on('change', function () {
         updateDeleteButton();
         updateCheckAllCheckbox();
     });
-    
-    checkAllCheckbox.on('change', function() {
+
+    checkAllCheckbox.on('change', function () {
         checkboxes.prop('checked', $(this).prop('checked'));
         updateDeleteButton();
     });
 });
 
-$('#deleteButton').click(function() {
-    const checkedValues = $('input[name="object-id"]:checked').map(function() {
+$('#deleteButton').click(function () {
+    const checkedValues = $('input[name="object-id"]:checked').map(function () {
         return $(this).val();
     }).get();
     const message = "Are you sure you want to delete the selected?";
@@ -106,7 +106,7 @@ $('#deleteButton').click(function() {
             data: {
                 'ids': checkedValues
             },
-            beforeSend: function(xhr) {
+            beforeSend: function (xhr) {
                 xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
             },
             success: function (response) {
@@ -119,8 +119,8 @@ $('#deleteButton').click(function() {
     }
 });
 
-$(document).ready(function() {
-    $("#check-all").click(function() {
-      $(".check-item").prop('checked', $(this).prop('checked'));
+$(document).ready(function () {
+    $("#check-all").click(function () {
+        $(".check-item").prop('checked', $(this).prop('checked'));
     });
 });

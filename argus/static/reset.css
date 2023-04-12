@@ -4,21 +4,20 @@
     padding: 0;
     border: 0;
     box-sizing: border-box;
-  }
-  
-  /* Set font size and line height to a consistent value */
-  html {
+}
+
+/* Set font size and line height to a consistent value */
+html {
     font-size: 16px;
     line-height: 1.5;
-  }
-  
-  /* Remove text decoration from links */
-  a {
+}
+
+/* Remove text decoration from links */
+a {
     text-decoration: none;
-  }
-  
-  /* Set default background color to white */
-  body {
+}
+
+/* Set default background color to white */
+body {
     background-color: #fff;
-  }
-  
+}
