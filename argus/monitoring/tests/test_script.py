@@ -125,3 +125,74 @@ class ScriptViewSetTests(APITestCase):
         data = response.json()
         self.assertEqual(len(data['results']), page_size)
         self.assertEqual(data['total_pages'], math.ceil(cnt/page_size))
+
+    def test_script_create_post(self):
+        url = reverse('monitoring:script-list')
+        data = {
+            'name': 'test script',
+            'language': LanguageChoices.shell.value,
+            'code': 'ls',
+            'authority': AuthorityChoices.public.value,
+            'output_type': OutputTypeChoices.csv.value,
+            'note': ''
+        }
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_script_create_post_exist_name(self):
+        url = reverse('monitoring:script-list')
+        data = {
+            'name': 'test script',
+            'language': LanguageChoices.shell.value,
+            'code': 'ls',
+            'authority': AuthorityChoices.public.value,
+            'output_type': OutputTypeChoices.csv.value,
+            'note': ''
+        }
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(list(response.json()), ['name'])
+
+    def test_script_create_post_invalid_language(self):
+        url = reverse('monitoring:script-list')
+        data = {
+            'name': 'test script',
+            'language': 'asdfad',
+            'code': 'ls',
+            'authority': AuthorityChoices.public.value,
+            'output_type': OutputTypeChoices.csv.value,
+            'note': ''
+        }
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(list(response.json()), ['language'])
+
+    def test_script_create_post_invalid_authority(self):
+        url = reverse('monitoring:script-list')
+        data = {
+            'name': 'test script',
+            'language': LanguageChoices.shell.value,
+            'code': 'ls',
+            'authority': 'qwerqwe',
+            'output_type': OutputTypeChoices.csv.value,
+            'note': ''
+        }
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(list(response.json()), ['authority'])
+
+    def test_script_create_post_invalid_authority(self):
+        url = reverse('monitoring:script-list')
+        data = {
+            'name': 'test script',
+            'language': LanguageChoices.shell.value,
+            'code': 'ls',
+            'authority': AuthorityChoices.public.value,
+            'output_type': 'qwerqwer',
+            'note': ''
+        }
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(list(response.json()), ['output_type'])

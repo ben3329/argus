@@ -198,12 +198,21 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
         return Response(serializer.data)
 
 class ScriptViewSet(mixins.ListModelMixin,
+                    mixins.CreateModelMixin,
                     GenericViewSet):
     queryset = Script.objects.all()
-    serializer_class = ScriptSerializer
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        match self.action:
+            case 'list':
+                return ScriptSerializer
+            case 'create':
+                return ScriptCreateSerializer
+            case _:
+                return None
 
     def get_queryset(self):
         user = self.request.user
@@ -216,6 +225,17 @@ class ScriptViewSet(mixins.ListModelMixin,
     @swagger_auto_schema(responses=script_list_api_response)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+    def create(self, request:Request, *args, **kwargs) -> Response:
+        data = deepcopy(request.data)
+        data['user'] = request.user.id
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        
 
 def authorize_api(request: HttpRequest) -> requests.Session:
     user = request.user
