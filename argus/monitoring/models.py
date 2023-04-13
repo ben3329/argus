@@ -91,7 +91,7 @@ class Script(models.Model):
     output_type = models.CharField(
         choices=OutputTypeChoices.choices, max_length=15)
     note = models.TextField(null=True, blank=True)
-    create_date = models.DateTimeField(auto_now=True)
+    create_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
     revision = models.IntegerField(default=1)
 
@@ -102,6 +102,11 @@ class Script(models.Model):
                 name='user_script_name_unique_constraints',
             )
         ]
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None:
+            self.revision += 1
+        super().save(*args, **kwargs)
 
 
 class Monitor(models.Model):
