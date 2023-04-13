@@ -27,7 +27,7 @@ class AccessCredential(models.Model):
     password = models.CharField(max_length=31, null=True, blank=True)
     secret = models.TextField(null=True, blank=True)
     note = models.TextField(null=True, blank=True)
-    create_date = models.DateTimeField(auto_now=True)
+    create_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
@@ -52,7 +52,7 @@ class Asset(models.Model):
     access_credential = models.ForeignKey(
         AccessCredential, on_delete=models.SET_NULL, null=True, blank=True)
     note = models.TextField(null=True, blank=True)
-    create_date = models.DateTimeField(auto_now=True)
+    create_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
@@ -113,7 +113,7 @@ class Monitor(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     name = models.CharField(max_length=15)
-    create_date = models.DateTimeField(auto_now=True)
+    create_date = models.DateTimeField(auto_now_add=True)
 
     class TargetSystem(models.TextChoices):
         linux = 'linux'

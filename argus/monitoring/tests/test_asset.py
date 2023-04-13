@@ -194,6 +194,18 @@ class AssetViewSetTests(APITestCase):
                 'access_credential': asset.access_credential.id, 'note': ''}
         response = self.client.put(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_asset_update_put_not_changed_create_date(self):
+        self.create_asset(self.super_user, self.admin_cred, 1)
+        asset = Asset.objects.all().first()
+        old_date = asset.create_date
+        url = reverse('monitoring:asset-detail', kwargs={'pk': asset.id})
+        data = {'id': asset.id, 'user': asset.user.id, 'name': asset.name,
+                'ip': '2.2.2.2', 'port': 33, 'asset_type': 'linux',
+                'access_credential': asset.access_credential.id, 'note': ''}
+        response = self.client.put(url, data=data)
+        new_date = Asset.objects.all().first().create_date
+        self.assertEqual(old_date, new_date)
 
     def test_asset_partial_update_patch(self):
         self.create_asset(self.super_user, self.admin_cred, 1)
