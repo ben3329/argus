@@ -220,6 +220,7 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
 
 
 class ScriptViewSet(mixins.ListModelMixin,
+                    mixins.RetrieveModelMixin,
                     mixins.CreateModelMixin,
                     mixins.UpdateModelMixin,
                     GenericViewSet):
@@ -231,7 +232,9 @@ class ScriptViewSet(mixins.ListModelMixin,
     def get_serializer_class(self):
         match self.action:
             case 'list':
-                return ScriptSerializer
+                return ScriptListSerializer
+            case 'retrieve':
+                return ScriptRetrieveSerializer
             case 'create':
                 return ScriptCreateSerializer
             case 'update' | 'partial_update':
@@ -250,6 +253,10 @@ class ScriptViewSet(mixins.ListModelMixin,
     @swagger_auto_schema(responses=script_list_api_response)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+    
+    @swagger_auto_schema(responses=script_retrieve_api_response)
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(

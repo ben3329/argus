@@ -116,6 +116,32 @@ class ScriptViewSetTests(APITestCase):
         self.assertEqual(len(data['results']), page_size)
         self.assertEqual(data['total_pages'], math.ceil(cnt/page_size))
 
+    def test_script_retrieve_get(self):
+        self.create_script(self.super_user, AuthorityChoices.private.value, 1)
+        script = Script.objects.all().first()
+        url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_script_retrieve_get_others_private(self):
+        self.create_script(self.test_user, AuthorityChoices.private.value, 1)
+        script = Script.objects.all().first()
+        url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_script_retrieve_get_others_public(self):
+        self.create_script(self.test_user, AuthorityChoices.public.value, 1)
+        script = Script.objects.all().first()
+        url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_script_retrieve_get_not_exist(self):
+        url = reverse('monitoring:script-detail', kwargs={'pk': 5})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_script_create_post(self):
         url = reverse('monitoring:script-list')
         data = {
@@ -199,7 +225,7 @@ class ScriptViewSetTests(APITestCase):
         response = self.client.delete(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Script.objects.all().count(), cnt - delete_cnt)
-    
+
     def test_script_update_put(self):
         self.create_script(self.super_user, AuthorityChoices.public.value, 1)
         script = Script.objects.all().first()
@@ -211,7 +237,7 @@ class ScriptViewSetTests(APITestCase):
                 'note': ''}
         response = self.client.put(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_script_update_put_update_update_date(self):
         self.create_script(self.super_user, AuthorityChoices.public.value, 1)
         script = Script.objects.all().first()
@@ -225,7 +251,7 @@ class ScriptViewSetTests(APITestCase):
         response = self.client.put(url, data=data)
         new_date = Script.objects.all().first().update_date
         self.assertNotEqual(old_date, new_date)
-    
+
     def test_script_update_put_not_changed_create_date(self):
         self.create_script(self.super_user, AuthorityChoices.public.value, 1)
         script = Script.objects.all().first()
@@ -239,7 +265,7 @@ class ScriptViewSetTests(APITestCase):
         response = self.client.put(url, data=data)
         new_date = Script.objects.all().first().create_date
         self.assertEqual(old_date, new_date)
-    
+
     def test_script_update_put_update_revision(self):
         self.create_script(self.super_user, AuthorityChoices.public.value, 1)
         script = Script.objects.all().first()
@@ -261,4 +287,3 @@ class ScriptViewSetTests(APITestCase):
         data = {'name': 'test'}
         response = self.client.patch(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
