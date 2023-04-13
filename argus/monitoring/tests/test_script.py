@@ -199,3 +199,66 @@ class ScriptViewSetTests(APITestCase):
         response = self.client.delete(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Script.objects.all().count(), cnt - delete_cnt)
+    
+    def test_script_update_put(self):
+        self.create_script(self.super_user, AuthorityChoices.public.value, 1)
+        script = Script.objects.all().first()
+        url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
+        data = {'user': self.super_user, 'name': script.name,
+                'language': script.language, 'code': script.code,
+                'authority': AuthorityChoices.private.value,
+                'output_type': script.output_type,
+                'note': ''}
+        response = self.client.put(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    def test_script_update_put_update_update_date(self):
+        self.create_script(self.super_user, AuthorityChoices.public.value, 1)
+        script = Script.objects.all().first()
+        old_date = script.update_date
+        url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
+        data = {'user': self.super_user, 'name': script.name,
+                'language': script.language, 'code': script.code,
+                'authority': AuthorityChoices.private.value,
+                'output_type': script.output_type,
+                'note': ''}
+        response = self.client.put(url, data=data)
+        new_date = Script.objects.all().first().update_date
+        self.assertNotEqual(old_date, new_date)
+    
+    def test_script_update_put_not_changed_create_date(self):
+        self.create_script(self.super_user, AuthorityChoices.public.value, 1)
+        script = Script.objects.all().first()
+        old_date = script.create_date
+        url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
+        data = {'user': self.super_user, 'name': script.name,
+                'language': script.language, 'code': script.code,
+                'authority': AuthorityChoices.private.value,
+                'output_type': script.output_type,
+                'note': ''}
+        response = self.client.put(url, data=data)
+        new_date = Script.objects.all().first().create_date
+        self.assertEqual(old_date, new_date)
+    
+    def test_script_update_put_update_revision(self):
+        self.create_script(self.super_user, AuthorityChoices.public.value, 1)
+        script = Script.objects.all().first()
+        self.assertEqual(script.revision, 1)
+        url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
+        data = {'user': self.super_user, 'name': script.name,
+                'language': script.language, 'code': script.code,
+                'authority': AuthorityChoices.private.value,
+                'output_type': script.output_type,
+                'note': ''}
+        response = self.client.put(url, data=data)
+        revision = Script.objects.all().first().revision
+        self.assertEqual(revision, 2)
+
+    def test_script_partial_update_patch(self):
+        self.create_script(self.super_user, AuthorityChoices.public.value, 1)
+        script = Script.objects.all().first()
+        url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
+        data = {'name': 'test'}
+        response = self.client.patch(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+

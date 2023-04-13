@@ -193,6 +193,19 @@ class ScriptCreateSerializer(serializers.ModelSerializer):
                 "Script with this name already exists.")
         return value
 
+class ScriptUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Script
+        fields = ['user', 'name', 'language', 'code',
+                  'authority', 'output_type', 'note']
+
+    def validate_name(self, value):
+        model = self.Meta.model
+        user = self.initial_data.get('user')
+        if model.objects.filter(user=user, name=value).exclude(id=self.instance.id).exists():
+            raise serializers.ValidationError(
+                "Script with this name already exists.")
+        return value
 
 class MonitoringSerializer(serializers.ModelSerializer):
     class Meta:

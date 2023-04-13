@@ -221,6 +221,7 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
 
 class ScriptViewSet(mixins.ListModelMixin,
                     mixins.CreateModelMixin,
+                    mixins.UpdateModelMixin,
                     GenericViewSet):
     queryset = Script.objects.all()
     pagination_class = Pagination
@@ -233,6 +234,8 @@ class ScriptViewSet(mixins.ListModelMixin,
                 return ScriptSerializer
             case 'create':
                 return ScriptCreateSerializer
+            case 'update' | 'partial_update':
+                return ScriptUpdateSerializer
             case _:
                 return None
 
@@ -272,6 +275,41 @@ class ScriptViewSet(mixins.ListModelMixin,
         self.queryset.filter(id__in=ids, user=request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=script_create_api_required_properties,
+            properties=script_create_api_properties,
+        ),
+        responses=script_create_api_response
+    )
+    def update(self, request: Request, *args, **kwargs) -> Response:
+        data = deepcopy(request.data)
+        data['user'] = request.user.id
+
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=script_create_api_required_properties,
+            properties=script_create_api_properties,
+        ),
+        responses=script_create_api_response
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
 
 def authorize_api(request: HttpRequest) -> requests.Session:
     user = request.user
