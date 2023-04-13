@@ -195,3 +195,12 @@ class AccessCredentialViewSetTests(APITestCase):
         self.assertNotIn('username', data[0])
         self.assertNotIn('password', data[0])
         self.assertNotIn('secret', data[0])
+
+    def test_accesscredential_update_put_not_changed_create_date(self):
+        self.create_access_credential(self.super_user, 1)
+        cred = AccessCredential.objects.all().first()
+        old_date = cred.create_date
+        cred.name = 'testname'
+        cred.save()
+        new_date = AccessCredential.objects.all().first().create_date
+        self.assertEqual(old_date, new_date)
