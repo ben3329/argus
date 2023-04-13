@@ -171,12 +171,22 @@ class AccessCredentialUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This field is required.")
 
 
-class ScriptSerializer(serializers.ModelSerializer):
+class ScriptListSerializer(serializers.ModelSerializer):
     user_detail = UserSerializer(source='user', read_only=True)
 
     class Meta:
         model = Script
         fields = ['id', 'user', 'user_detail', 'name', 'note']
+
+
+class ScriptRetrieveSerializer(serializers.ModelSerializer):
+    user_detail = UserSerializer(source='user', read_only=True)
+
+    class Meta:
+        model = Script
+        fields = ['id', 'user', 'user_detail', 'name',
+                  'language', 'code', 'authority', 'output_type',
+                  'note', 'create_date', 'update_date', 'revision']
 
 
 class ScriptCreateSerializer(serializers.ModelSerializer):
@@ -193,6 +203,7 @@ class ScriptCreateSerializer(serializers.ModelSerializer):
                 "Script with this name already exists.")
         return value
 
+
 class ScriptUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Script
@@ -206,6 +217,7 @@ class ScriptUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Script with this name already exists.")
         return value
+
 
 class MonitoringSerializer(serializers.ModelSerializer):
     class Meta:

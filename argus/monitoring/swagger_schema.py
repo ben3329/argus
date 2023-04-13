@@ -263,6 +263,16 @@ script_list_api_response = {
     )
 }
 
+script_retrieve_api_response = {
+    200: openapi.Response(
+        description='List of Script',
+        schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties=script_properties
+        )
+    )
+}
+
 script_create_api_required_properties = [
     'name', 'language', 'code', 'authority', 'output_type'
 ]
