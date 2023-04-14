@@ -375,8 +375,19 @@ def access_credential(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def script(request):
-    context = {'user': request.user}
-    return render(request, 'monitoring/script.html', context)
+    page_number = request.GET.get('page', 1)
+    params = {'page': page_number}
+    api_url = 'http://localhost:8080' + reverse('monitoring:script-list')
+    session = authorize_api(request)
+    response = session.get(api_url, params=params)
+
+    data = response.json()
+    if response.status_code == status.HTTP_200_OK:
+        context = {'user': request.user,
+                   'data': data, 'current': int(page_number)}
+        return render(request, 'monitoring/script.html', context)
+    else:
+        return HttpResponseBadRequest(data['detail'])
 
 
 @login_required
