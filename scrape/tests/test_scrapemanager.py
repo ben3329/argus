@@ -1,7 +1,8 @@
 from share import *
-import unittest
 from scrapemanger import *
 from dataclass import *
+
+import unittest
 import asyncio
 from tortoise.contrib.test import TestCase, initializer, finalizer
 
@@ -12,15 +13,15 @@ class TestScrapeManager(TestCase):
         access_credential = AccessCredentialModel(
             access_type='ssh_password', username=USERNAME, password=PASSWORD)
         asset = AssetModel(ip=IP, port=PORT, asset_type='linux',
-                      access_credential=access_credential)
+                           access_credential=access_credential)
         script = UserDefinedScriptModel(name='test', language='bash',
                                         code='ls', output_type='none', revision=1)
         self.monitor = ScrapeModel(name='testm', asset=asset,
-                               script=script, interval=5, report_list=['diff'])
+                                   script=script, interval=5, report_list=['diff'])
 
     def tearDown(self):
         finalizer()
-    
+
     async def asyncSetUp(self):
         await super().asyncSetUp()
 
@@ -72,7 +73,8 @@ class TestScrapeManager(TestCase):
         self.assertIsInstance(model.script, UserDefinedScriptModel)
 
     async def test_scrape_built_in_linux_system_memory(self):
-        script = BuiltInScriptModel(category='linux_system_memory', fields=['used'])
+        script = BuiltInScriptModel(
+            category='linux_system_memory', fields=['used'])
         self.monitor.script = script
         monitor_manager = await ScrapeManager.create(self.monitor, init_tortoise=False)
         await monitor_manager.scrape_data()
