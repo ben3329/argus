@@ -1,28 +1,29 @@
+from settings import *
+from dataclass import *
+from database import Scrape
+from scrapemanger import ScrapeManager
+from logger import logger
+
+import logging
 import redis.asyncio as redis
 import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import json
-from scrapemanger import ScrapeManager 
-from dataclass import *
 from typing import Dict
 from datetime import datetime
 import pytz
-from logger import logger
-import logging
-from settings import *
-from database import Scrape
 
 
 class Main(object):
-    def __init__(self, redis_queue_name:str='web_to_engine', init_tortoise:bool=True) -> None:
-        self.redis_server = redis.from_url(f'redis://{REDIS_HOST}')
+    def __init__(self, redis_queue_name: str = 'web_to_engine', init_tortoise: bool = True) -> None:
+        self.redis_client = redis.from_url(f'redis://{REDIS_HOST}')
         self.scrape_mgr_pool: Dict[str, ScrapeManager] = dict()
         self.scheduler = AsyncIOScheduler(logger=logger)
         self.scheduler.start()
         self.redis_queue_name = redis_queue_name
         self.init_tortoise = init_tortoise
 
-    async def wait_running_job_complete(self):
+    async def wait_running_job_complete(self) -> None:
         now = datetime.now(tz=pytz.UTC)
         while True:
             for job in self.scheduler.get_jobs():
@@ -34,7 +35,7 @@ class Main(object):
 
     async def read_message(self) -> None:
         while True:
-            _, message = await self.redis_server.brpop(self.redis_queue_name)
+            _, message = await self.redis_client.brpop(self.redis_queue_name)
             try:
                 message_data = json.loads(message.decode())
                 if message_data['cmd'] == 'create':
@@ -72,7 +73,13 @@ class Main(object):
                     logger.setLevel(logging.INFO)
                     logger.info(jobs_str)
                     logger.setLevel(logging.WARNING)
-                    print(jobs_str)
+                    self.scheduler.print_jobs()
+                elif message_data['cmd'] == 'exit':
+                    await self.redis_client.close()
+                    await self.wait_running_job_complete()
+                    self.scheduler.remove_all_jobs()
+                    del self.scrape_mgr_pool
+                    break
                 else:
                     raise ValueError(
                         f"Unknown command. cmd: {message_data['cmd']}")
@@ -80,7 +87,7 @@ class Main(object):
                 logger.warning(
                     f"{type(e).__name__}. message: {message}, error_message: {e}")
 
-    async def stop_scrape(self, scrape_name:str):
+    async def stop_scrape(self, scrape_name: str):
         scrape_job_id = scrape_name + '_scrape'
         report_job_id = scrape_name + '_report'
         await self.wait_running_job_complete()
@@ -96,6 +103,7 @@ class Main(object):
     def run(self):
         print('start scrape')
         asyncio.run(self.read_message())
+
 
 if __name__ == '__main__':
     program = Main()

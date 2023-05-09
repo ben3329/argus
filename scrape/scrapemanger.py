@@ -1,15 +1,14 @@
-from datetime import datetime
-from typing import Optional, Dict, Union, Any, Literal
-import asyncssh
-import json
-from database import DBClient, Scrape
-from logger import logger
-from collections import OrderedDict
-import asyncio
 from report import *
-import built_in_scripts
 from errors import *
 from dataclass import *
+from database import DBClient, Scrape
+from logger import logger
+import built_in_scripts
+
+from typing import Dict, Union, Any, Literal
+import asyncssh
+import json
+from collections import OrderedDict
 
 
 class ScrapeManager(object):
@@ -41,7 +40,7 @@ class ScrapeManager(object):
     def status(self):
         return self._status
 
-    async def set_status(self, value:str):
+    async def set_status(self, value: str):
         if self._status != value:
             self._status = value
             await self.dbclient.set_scrape_status(self.scrape_model.name, value)
@@ -156,7 +155,8 @@ class ScrapeManager(object):
                 async with sftp.open(path, 'w') as f:
                     await f.write(self.script.code)
             except Exception as e:
-                raise ScriptUploadError(self.scrape_model.name, self.script.name, str(e))
+                raise ScriptUploadError(
+                    self.scrape_model.name, self.script.name, str(e))
 
     def __convert_metric_to_dict(self, metric: str) -> Dict[str, Union[int, float]]:
         def is_valid_data(obj: Any) -> bool:

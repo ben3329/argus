@@ -1,15 +1,15 @@
-import aiosmtplib
-import pandas as pd
-import type_alias
-from typing import List
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-import os
-from premailer import Premailer
-import base64
+from settings import *
 from errors import *
 from dataclass import ScrapeDTO
-from settings import *
+import type_alias
+
+from typing import List
+import aiosmtplib
+import pandas as pd
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from premailer import Premailer
+import base64
 
 
 class Reporter(object):

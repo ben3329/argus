@@ -1,15 +1,15 @@
 from share import *
 from settings import *
-
 from database import *
 from main import Main
-from logger import log_path, logger
+from logger import log_path
 
 import asyncio
 import unittest
 from tortoise.contrib.test import TestCase, initializer, finalizer
 import redis.asyncio as redis
 import json
+
 
 class TestMain(TestCase):
     def setUp(self):
@@ -39,7 +39,8 @@ class TestMain(TestCase):
             'interval': 1,
             'report_time': '* * * * *',
             'report_list': ['diff']}
-        self.create_cmd = {'cmd': 'create', 'serialized_data':self.create_data}
+        self.create_cmd = {'cmd': 'create',
+                           'serialized_data': self.create_data}
         with open(log_path, 'w') as f:
             pass
 
@@ -48,7 +49,13 @@ class TestMain(TestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
-    
+
+    async def asyncTearDown(self):
+        await self.redis.lpush(self.redis_queue_name, json.dumps({'cmd:': 'exit'}))
+        await self.redis.close()
+        await asyncio.sleep(2)
+        await super().asyncTearDown()
+
     async def test_cmd_create(self):
         await self.redis.lpush(self.redis_queue_name, json.dumps(self.create_cmd))
         await asyncio.sleep(2)
@@ -67,7 +74,7 @@ class TestMain(TestCase):
         with open(log_path, 'r') as f:
             log = f.read()
         self.assertIn('INFO jobs:', log)
-    
+
     async def test_cmd_stop(self):
         stop_cmd = {'cmd': 'stop', 'name': self.scrape_name}
         await self.redis.lpush(self.redis_queue_name, json.dumps(self.create_cmd))
@@ -80,7 +87,7 @@ class TestMain(TestCase):
         scrape_data = await ScrapeData.all()
         self.assertNotEqual(len(scrape_data), 0)
         self.assertEqual(list(self.main.scrape_mgr_pool), [])
-        
+
     async def test_cmd_delete(self):
         delete_cmd = {'cmd': 'delete', 'name': self.scrape_name}
         await self.redis.lpush(self.redis_queue_name, json.dumps(self.create_cmd))
@@ -93,9 +100,6 @@ class TestMain(TestCase):
         scrape_data = await ScrapeData.all()
         self.assertEqual(len(scrape_data), 0)
         self.assertEqual(list(self.main.scrape_mgr_pool), [])
-        
-
-
 
 
 if __name__ == '__main__':

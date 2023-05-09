@@ -1,10 +1,9 @@
 from share import *
-import unittest
-
 from database import *
-import asyncio
 from settings import *
 
+import asyncio
+import unittest
 from tortoise.contrib.test import TestCase, initializer, finalizer
 
 
@@ -14,7 +13,7 @@ class TestDBClient(TestCase):
 
     def tearDown(self):
         finalizer()
-        
+
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.dbclient = await DBClient(init_tortoise=False)
@@ -40,21 +39,6 @@ class TestDBClient(TestCase):
         await self.dbclient.delete_scrape(scrape)
         scrapedata = await ScrapeData.all()
         self.assertIs(len(scrapedata), 0)
-
-
-# from tortoise import Tortoise, generate_config
-# class TestDBClient(unittest.IsolatedAsyncioTestCase):
-#     async def asyncSetUp(self):
-#         config = generate_config('sqlite://:memory:', app_modules={'models': ['database']},
-#                                  testing=True, connection_label='models')
-#         await Tortoise.init(config, _create_db=True)
-#         await Tortoise.generate_schemas(safe=False)
-#         self.dbclient = await DBClient(init_tortoise=False)
-#         self.scrape_name = 'test'
-#         print(config)
-
-#     async def asyncTearDown(self):
-#         await Tortoise._drop_databases()
 
 
 if __name__ == '__main__':

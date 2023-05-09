@@ -94,7 +94,9 @@ class ScrapeDTO:
         fig.tight_layout()
         img_buffer = BytesIO()
         fig.savefig(img_buffer, format='png')
-        return img_buffer.getvalue()
+        image_data = img_buffer.getvalue()
+        plt.close()
+        return image_data
 
     @property
     def diff(self) -> pd.DataFrame:
