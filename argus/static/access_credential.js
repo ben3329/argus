@@ -5,7 +5,7 @@ $(document).ready(function () {
     const secretField = $('#id_secret').parent();
 
     function updateFormFields() {
-        if (accessTypeSelect.val() === 'ssh_id_password') {
+        if (accessTypeSelect.val() === 'ssh_password') {
             IdField.closest('.row').show();
             PasswordField.closest('.row').show();
             secretField.closest('.row').hide();

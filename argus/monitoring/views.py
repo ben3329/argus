@@ -15,7 +15,6 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.db.models import Q, Case, When
 
-from .engine import *
 from .serializers import *
 from .models import *
 from .swagger_schema import *
@@ -224,7 +223,7 @@ class ScriptViewSet(mixins.ListModelMixin,
                     mixins.CreateModelMixin,
                     mixins.UpdateModelMixin,
                     GenericViewSet):
-    queryset = Script.objects.all()
+    queryset = UserDefinedScript.objects.all()
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
     permission_classes = [IsAuthenticated]

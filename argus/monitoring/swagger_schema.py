@@ -50,17 +50,17 @@ access_credential_properties = {
     'access_type': openapi.Schema(
         type=openapi.TYPE_STRING,
         enum=[choice.value for choice in AccessTypeChoices],
-        default=AccessTypeChoices.ssh_id_password.value,
+        default=AccessTypeChoices.ssh_password.value,
         description="A access type of credential"),
     'username': openapi.Schema(
         type=openapi.TYPE_STRING,
-        description="The username to be used for login with this access credential. Required if access_type ends with '_id_password'"),
+        description="The username to be used for login with this access credential. Required if access_type ends with '_password'"),
     'password': openapi.Schema(
         type=openapi.TYPE_STRING,
-        description="The password to be used for login with this access credential. Required if access_type ends with '_id_password'"),
+        description="The password to be used for login with this access credential. Required if access_type ends with '_password'"),
     'secret': openapi.Schema(
         type=openapi.TYPE_STRING,
-        description="The secret to be used for login with this access credential. Required if access_type does not end with '_id_password'"),
+        description="The secret to be used for login with this access credential. Required if access_type does not end with '_password'"),
     'note': openapi.Schema(
         type=openapi.TYPE_STRING,
         description="Additional notes about the access credential"),

@@ -13,7 +13,7 @@ import secrets
 class ScriptViewSetTests(APITestCase):
     def create_script(self, user: User, authority: Union[AuthorityChoices, str], cnt: int = 10) -> None:
         for i in range(cnt):
-            q = Script(user=user, name=secrets.token_hex(5), language=LanguageChoices.shell,
+            q = UserDefinedScript(user=user, name=secrets.token_hex(5), language=LanguageChoices.shell,
                        code='ls', authority=authority, output_type=OutputTypeChoices.none)
             q.save()
 
@@ -74,28 +74,28 @@ class ScriptViewSetTests(APITestCase):
                 self.assertEqual(d['user'], self.test_user.id)
 
     def test_script_list_get_order_by_update_date(self):
-        q = Script(user=self.super_user, name='2', language=LanguageChoices.shell,
+        q = UserDefinedScript(user=self.super_user, name='2', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
-        q = Script(user=self.super_user, name='1', language=LanguageChoices.shell,
+        q = UserDefinedScript(user=self.super_user, name='1', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
-        q = Script(user=self.super_user, name='0', language=LanguageChoices.shell,
+        q = UserDefinedScript(user=self.super_user, name='0', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
-        q = Script(user=self.test_user, name='5', language=LanguageChoices.shell,
+        q = UserDefinedScript(user=self.test_user, name='5', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
-        q = Script(user=self.test_user, name='4', language=LanguageChoices.shell,
+        q = UserDefinedScript(user=self.test_user, name='4', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
-        q = Script(user=self.test_user, name='3', language=LanguageChoices.shell,
+        q = UserDefinedScript(user=self.test_user, name='3', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
-        obj = Script.objects.get(name='0')
+        obj = UserDefinedScript.objects.get(name='0')
         obj.update_date = datetime.now()
         obj.save()
-        obj = Script.objects.get(name='3')
+        obj = UserDefinedScript.objects.get(name='3')
         obj.update_date = datetime.now()
         obj.save()
 
@@ -118,21 +118,21 @@ class ScriptViewSetTests(APITestCase):
 
     def test_script_retrieve_get(self):
         self.create_script(self.super_user, AuthorityChoices.private.value, 1)
-        script = Script.objects.all().first()
+        script = UserDefinedScript.objects.all().first()
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_script_retrieve_get_others_private(self):
         self.create_script(self.test_user, AuthorityChoices.private.value, 1)
-        script = Script.objects.all().first()
+        script = UserDefinedScript.objects.all().first()
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_script_retrieve_get_others_public(self):
         self.create_script(self.test_user, AuthorityChoices.public.value, 1)
-        script = Script.objects.all().first()
+        script = UserDefinedScript.objects.all().first()
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -217,18 +217,18 @@ class ScriptViewSetTests(APITestCase):
         cnt = 10
         delete_cnt = 5
         self.create_script(self.super_user, AuthorityChoices.public.value, cnt)
-        ids = [script['id'] for script in Script.objects.all().values('id')]
+        ids = [script['id'] for script in UserDefinedScript.objects.all().values('id')]
         data = {
             'ids[]': ids[:delete_cnt]
         }
         url = reverse('monitoring:script-delete-bulk')
         response = self.client.delete(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(Script.objects.all().count(), cnt - delete_cnt)
+        self.assertEqual(UserDefinedScript.objects.all().count(), cnt - delete_cnt)
 
     def test_script_update_put(self):
         self.create_script(self.super_user, AuthorityChoices.public.value, 1)
-        script = Script.objects.all().first()
+        script = UserDefinedScript.objects.all().first()
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
         data = {'user': self.super_user, 'name': script.name,
                 'language': script.language, 'code': script.code,
@@ -240,7 +240,7 @@ class ScriptViewSetTests(APITestCase):
 
     def test_script_update_put_update_update_date(self):
         self.create_script(self.super_user, AuthorityChoices.public.value, 1)
-        script = Script.objects.all().first()
+        script = UserDefinedScript.objects.all().first()
         old_date = script.update_date
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
         data = {'user': self.super_user, 'name': script.name,
@@ -249,12 +249,12 @@ class ScriptViewSetTests(APITestCase):
                 'output_type': script.output_type,
                 'note': ''}
         response = self.client.put(url, data=data)
-        new_date = Script.objects.all().first().update_date
+        new_date = UserDefinedScript.objects.all().first().update_date
         self.assertNotEqual(old_date, new_date)
 
     def test_script_update_put_not_changed_create_date(self):
         self.create_script(self.super_user, AuthorityChoices.public.value, 1)
-        script = Script.objects.all().first()
+        script = UserDefinedScript.objects.all().first()
         old_date = script.create_date
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
         data = {'user': self.super_user, 'name': script.name,
@@ -263,12 +263,12 @@ class ScriptViewSetTests(APITestCase):
                 'output_type': script.output_type,
                 'note': ''}
         response = self.client.put(url, data=data)
-        new_date = Script.objects.all().first().create_date
+        new_date = UserDefinedScript.objects.all().first().create_date
         self.assertEqual(old_date, new_date)
 
     def test_script_update_put_update_revision(self):
         self.create_script(self.super_user, AuthorityChoices.public.value, 1)
-        script = Script.objects.all().first()
+        script = UserDefinedScript.objects.all().first()
         self.assertEqual(script.revision, 1)
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
         data = {'user': self.super_user, 'name': script.name,
@@ -277,12 +277,12 @@ class ScriptViewSetTests(APITestCase):
                 'output_type': script.output_type,
                 'note': ''}
         response = self.client.put(url, data=data)
-        revision = Script.objects.all().first().revision
+        revision = UserDefinedScript.objects.all().first().revision
         self.assertEqual(revision, 2)
 
     def test_script_partial_update_patch(self):
         self.create_script(self.super_user, AuthorityChoices.public.value, 1)
-        script = Script.objects.all().first()
+        script = UserDefinedScript.objects.all().first()
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
         data = {'name': 'test'}
         response = self.client.patch(url, data=data)
