@@ -2,11 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-# Create your models here.
-
-
 class AccessTypeChoices(models.TextChoices):
-    ssh_id_password = 'ssh_id_password', 'SSH ID Password'
+    ssh_password = 'ssh_password', 'SSH Password'
     ssh_private_key = 'ssh_private_key', 'SSH Private Key'
 
     def __str__(self) -> str:
@@ -15,14 +12,13 @@ class AccessTypeChoices(models.TextChoices):
 
 class AssetTypeChoices(models.TextChoices):
     linux = 'linux', 'Linux'
-    windows = 'windows', 'Windows'
 
 
 class AccessCredential(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=31)
     access_type = models.CharField(
-        choices=AccessTypeChoices.choices, max_length=31, default='ssh_id_password')
+        choices=AccessTypeChoices.choices, max_length=31)
     username = models.CharField(max_length=31, null=True, blank=True)
     password = models.CharField(max_length=31, null=True, blank=True)
     secret = models.TextField(null=True, blank=True)
@@ -45,12 +41,14 @@ class Asset(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=31)
     ip = models.GenericIPAddressField()
-    port = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(
-        65535)], default=22)  # possible ssh port range is 1 ~ 65535
+    port = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(65535)],
+        default=22)
     asset_type = models.CharField(
-        choices=AssetTypeChoices.choices, max_length=15, default='linux')
+        choices=AssetTypeChoices.choices, max_length=15)
     access_credential = models.ForeignKey(
-        AccessCredential, on_delete=models.SET_NULL, null=True, blank=True)
+        AccessCredential, on_delete=models.SET_NULL,
+        null=True, blank=True)
     note = models.TextField(null=True, blank=True)
     create_date = models.DateTimeField(auto_now_add=True)
 
@@ -80,8 +78,8 @@ class OutputTypeChoices(models.TextChoices):
     none = 'none'
 
 
-class Script(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+class UserDefinedScript(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=31)
     language = models.CharField(
         choices=LanguageChoices.choices, max_length=15)
@@ -98,8 +96,8 @@ class Script(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'name'],
-                name='user_script_name_unique_constraints',
+                fields=['author', 'name'],
+                name='author_script_name_unique_constraints',
             )
         ]
 
@@ -109,21 +107,45 @@ class Script(models.Model):
         super().save(*args, **kwargs)
 
 
+class CategoryChoices(models.TextChoices):
+    linux_system_memory = 'linux_system_memory'
+
+
+class BuiltInScript(models.Model):
+    category = models.CharField(
+        choices=CategoryChoices.choices, max_length=31)
+    fields = models.JSONField()
+    parameter = models.JSONField(blank=True, null=True)
+
+
 class Monitor(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=31, unique=True)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
-    name = models.CharField(max_length=15)
+    built_in_script = models.ForeignKey(
+        BuiltInScript, on_delete=models.SET_NULL, null=True, blank=True)
+    user_defined_script = models.ForeignKey(
+        UserDefinedScript, on_delete=models.SET_NULL, null=True, blank=True)
+    interval = models.IntegerField(validators=[MinValueValidator(1)])
+    report_time = models.CharField(max_length=15, null=True, blank=True)
+    report_list = models.JSONField()
+    recipients = models.ManyToManyField(
+        User, related_name='monitor_recipients')
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='monitors')
     create_date = models.DateTimeField(auto_now_add=True)
 
-    class TargetSystem(models.TextChoices):
-        linux = 'linux'
-    target_system = models.CharField(
-        choices=TargetSystem.choices, max_length=15)
-    scrap_code = models.ForeignKey(
-        Script, on_delete=models.SET_NULL, null=True, blank=True)
-    interval = models.IntegerField(validators=[MinValueValidator(
-        1)], default=10, help_text="interval time as seconds.")
-    reporting = models.BooleanField(default=False)
-    report_time = models.TimeField(null=True, blank=True)
-    report_receiver = models.JSONField(
-        null=True, blank=True, help_text="['user1', 'user2', ...]")
+
+class Scrape(models.Model):
+    name = models.CharField(max_length=31, primary_key=True)
+    status = models.CharField(max_length=31, default='Normal')
+    
+    class Meta:
+        db_table = 'scrape'
+
+class ScrapeData(models.Model):
+    scrape = models.ForeignKey(Scrape, on_delete=models.CASCADE)
+    datetime = models.DateTimeField(auto_now_add=True)
+    data = models.JSONField()
+    
+    class Meta:
+        db_table = 'scrape_data'

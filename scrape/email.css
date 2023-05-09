@@ -1,0 +1,22 @@
+table {
+    color: #333;
+    background: white;
+    border: 1px solid grey;
+    font-size: 12pt;
+    border-collapse: collapse;
+}
+
+table thead th {
+    color: white;
+    background: #212529;
+}
+
+table th,
+table td {
+    padding: .5em;
+    border: 1px solid lightgrey;
+}
+
+tbody tr:nth-of-type(even) {
+    background: rgba(0, 0, 0, .05);
+}

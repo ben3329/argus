@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import *
+from monitoring.models import *
 from django.contrib.auth.models import User
 
 
@@ -111,7 +111,7 @@ class AccessCredentialCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_access_type(self, value):
-        if ('_id_password') in value:
+        if ('_password') in value:
             if self.initial_data.get('username') == None or self.initial_data.get('password') == None:
                 raise serializers.ValidationError(
                     "username and password field is required.")
@@ -122,15 +122,15 @@ class AccessCredentialCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_username(self, value):
-        if ('_id_password' in self.initial_data.get('access_type')) and not value:
+        if ('_password' in self.initial_data.get('access_type')) and not value:
             raise serializers.ValidationError("This field is required.")
 
     def validate_password(self, value):
-        if ('_id_password' in self.initial_data.get('access_type')) and not value:
+        if ('_password' in self.initial_data.get('access_type')) and not value:
             raise serializers.ValidationError("This field is required.")
 
     def validate_secret(self, value):
-        if ('_id_password' not in self.initial_data.get('access_type')) and not value:
+        if ('_password' not in self.initial_data.get('access_type')) and not value:
             raise serializers.ValidationError("This field is required.")
 
 
@@ -148,7 +148,7 @@ class AccessCredentialUpdateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_access_type(self, value):
-        if ('_id_password') in value:
+        if ('_password') in value:
             if self.initial_data.get('username') == None or self.initial_data.get('password') == None:
                 raise serializers.ValidationError(
                     "username and password field is required.")
@@ -159,46 +159,46 @@ class AccessCredentialUpdateSerializer(serializers.ModelSerializer):
         return value
 
     def validate_username(self, value):
-        if ('_id_password' in self.initial_data.get('access_type')) and not value:
+        if ('_password' in self.initial_data.get('access_type')) and not value:
             raise serializers.ValidationError("This field is required.")
 
     def validate_password(self, value):
-        if ('_id_password' in self.initial_data.get('access_type')) and not value:
+        if ('_password' in self.initial_data.get('access_type')) and not value:
             raise serializers.ValidationError("This field is required.")
 
     def validate_secret(self, value):
-        if ('_id_password' not in self.initial_data.get('access_type')) and not value:
+        if ('_password' not in self.initial_data.get('access_type')) and not value:
             raise serializers.ValidationError("This field is required.")
 
 
 class ScriptListSerializer(serializers.ModelSerializer):
-    user_detail = UserSerializer(source='user', read_only=True)
+    author_detail = UserSerializer(source='author', read_only=True)
 
     class Meta:
-        model = Script
-        fields = ['id', 'user', 'user_detail', 'name', 'note']
+        model = UserDefinedScript
+        fields = ['id', 'author', 'author_detail', 'name', 'note']
 
 
 class ScriptRetrieveSerializer(serializers.ModelSerializer):
-    user_detail = UserSerializer(source='user', read_only=True)
+    user_detail = UserSerializer(source='author', read_only=True)
 
     class Meta:
-        model = Script
-        fields = ['id', 'user', 'user_detail', 'name',
+        model = UserDefinedScript
+        fields = ['id', 'author', 'user_detail', 'name',
                   'language', 'code', 'authority', 'output_type',
                   'note', 'create_date', 'update_date', 'revision']
 
 
 class ScriptCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Script
-        fields = ['user', 'name', 'language', 'code',
+        model = UserDefinedScript
+        fields = ['author', 'name', 'language', 'code',
                   'authority', 'output_type', 'note']
 
     def validate_name(self, value):
         model = self.Meta.model
-        user = self.initial_data.get('user')
-        if model.objects.filter(user=user, name=value).exists():
+        author = self.initial_data.get('author')
+        if model.objects.filter(author=author, name=value).exists():
             raise serializers.ValidationError(
                 "Script with this name already exists.")
         return value
@@ -206,21 +206,64 @@ class ScriptCreateSerializer(serializers.ModelSerializer):
 
 class ScriptUpdateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Script
-        fields = ['user', 'name', 'language', 'code',
+        model = UserDefinedScript
+        fields = ['author', 'name', 'language', 'code',
                   'authority', 'output_type', 'note']
 
     def validate_name(self, value):
         model = self.Meta.model
-        user = self.initial_data.get('user')
-        if model.objects.filter(user=user, name=value).exclude(id=self.instance.id).exists():
+        author = self.initial_data.get('author')
+        if model.objects.filter(author=author, name=value).exclude(id=self.instance.id).exists():
             raise serializers.ValidationError(
                 "Script with this name already exists.")
         return value
 
 
-class MonitoringSerializer(serializers.ModelSerializer):
+# For scrape client
+class AccessCredentialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccessCredential
+        fields = ['access_type', 'username', 'password', 'secret']
+
+
+class AssetSerializer(serializers.ModelSerializer):
+    access_credential = AccessCredentialSerializer()
+
+    class Meta:
+        model = Asset
+        fields = ['ip', 'port', 'asset_type', 'access_credential']
+
+
+class BuiltInScriptSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BuiltInScript
+        fields = ['category', 'fields', 'parameter']
+
+
+class UserDefinedScriptSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserDefinedScript
+        fields = ['name', 'language', 'code', 'output_type']
+
+
+class MonitorToScrapeSerializer(serializers.ModelSerializer):
+    asset = AssetSerializer()
+    script = serializers.SerializerMethodField()
+    recipients = UserSerializer(many=True)
+
     class Meta:
         model = Monitor
-        fields = ['asset', 'target_system', 'scrap_code', 'interval',
-                  'reporting', 'report_time', 'report_receiver']
+        fields = ['name', 'asset', 'script', 'interval',
+                  'report_list', 'report_time', 'recipients']
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        recipients = ret['recipients']
+        ret['recipients'] = [r['email'] for r in recipients]
+        return ret
+
+    def get_script(self, obj):
+        if obj.user_defined_script:
+            return UserDefinedScriptSerializer(obj.user_defined_script).data
+        elif obj.built_in_script:
+            return BuiltInScriptSerializer(obj.built_in_script).data

@@ -83,9 +83,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'monitoring',
-        'HOST': '172.30.0.2',
+        'HOST': 'database',
         'USER': 'root',
-        'PASSWORD': os.environ.get('MYSQL_ROOT_PASSWORD'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
     }
 }
 
@@ -141,7 +141,7 @@ LOGGING = {
         'file': {
             'level': 'WARNING',
             'class': 'logging.FileHandler',
-            'filename': '/var/log/argus.log',
+            'filename': '/var/log/argus/argus.log',
         },
     },
     'loggers': {
@@ -158,9 +158,11 @@ LOGOUT_REDIRECT_URL = '/common/login'
 LOGIN_URL = '/common/login'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587  # or the port your SMTP server uses
-EMAIL_USE_TLS = True  # or False, depending on whether your SMTP server uses TLS
+EMAIL_HOST = os.environ.get('EMAIL_HOST')
+EMAIL_PORT = os.environ.get('EMAIL_PORT')
+EMAIL_USE_TLS = True if os.environ.get('EMAIL_USE_TLS', default='').upper() == 'TRUE' else False
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -171,3 +173,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_RESULT_BACKND = "redis://redis:6379"

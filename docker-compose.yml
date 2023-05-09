@@ -6,35 +6,78 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: admin_password
       MYSQL_DATABASE: monitoring
-    ports:
-      - 3306:3306
+      TZ: Asia/Seoul
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
     volumes:
       - ./database-data:/var/lib/mysql
-    networks:
-      internal_network:
-        ipv4_address: 172.30.0.2
-  app:
+  redis:
+    image: redis:7.0.10
+    container_name: redis
+  argus:
     image: argus:latest
-    container_name: app
+    container_name: argus
+    command: ./run.sh
     environment:
       DJANGO_SUPERUSER_USERNAME: root
       DJANGO_SUPERUSER_PASSWORD: admin_password
-      MYSQL_ROOT_PASSWORD: admin_password
       DJANGO_SUPERUSER_EMAIL: admin@admin.com
+      DB_HOST: database
+      DB_PASSWORD: admin_password
+      EMAIL_HOST: smtp.gmail.com
+      EMAIL_PORT: 587
+      EMAIL_USE_TLS: True
+      EMAIL_HOST_USER: 
+      EMAIL_HOST_PASSWORD: 
+      TZ: Asia/Seoul
+      REDIS_HOST: redis
     ports:
       - 80:8080
     volumes:
       - ./argus:/app
+      - ./logs:/var/log/argus
     depends_on:
       - database
-    networks:
-      internal_network:
-        ipv4_address: 172.30.0.3
-networks:
-  internal_network:
-    ipam:
-      config:
-        - subnet: 172.30.0.0/24
+      - redis
+  celery-worker:
+    image: argus:latest
+    container_name: celery-worker
+    command: celery -A argus worker --loglevel=debug --logfile=/var/log/argus/celery.worker.log
+    environment:
+      REDIS_HOST: redis
+    volumes:
+      - ./argus:/app
+      - ./logs:/var/log/argus
+    depends_on:
+      - redis
+  # celery-beat:
+  #   image: argus:latest
+  #   container_name: celery-beat
+  #   command: ./run_celery_beat.sh
+  #   environment:
+  #     REDIS_HOST: redis
+  #     DB_PASSWORD: admin_password
+  #   volumes:
+  #     - ./argus:/app
+  #     - ./logs:/var/log/celery
+  #   depends_on:
+  #     - redis
+  scrape:
+    image: scrape:latest
+    container_name: scrape
+    environment:
+      REDIS_HOST: redis
+      DB_HOST: database
+      DB_PASSWORD: admin_password
+      EMAIL_HOST: smtp.gmail.com
+      EMAIL_PORT: 587
+      EMAIL_HOST_USER: 
+      EMAIL_HOST_PASSWORD: 
+      TZ: Asia/Seoul
+    volumes:
+      - ./scrape:/app
+      - ./logs:/var/log/scrape
+    depends_on:
+      - redis
+      - argus
