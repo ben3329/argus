@@ -2,11 +2,14 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
-from ..models import *
+
+from monitoring.models import *
+from monitoring.tests.common import CommonMethods
+
 import math
 
 
-class AccessCredentialViewSetTests(APITestCase):
+class AccessCredentialViewSetTests(APITestCase, CommonMethods):
     def create_access_credential(self, user: User, cnt: int = 10):
         for i in range(cnt):
             q = AccessCredential(user=user, name=f'{user.username}test{str(i)}',
@@ -15,6 +18,8 @@ class AccessCredentialViewSetTests(APITestCase):
             q.save()
 
     def setUp(self):
+        super().setUp()
+        self.disconnect_signal()
         User = get_user_model()
         User.objects.create_superuser(
             username='admin', password='password', email='admin@myproject.com')
@@ -23,11 +28,11 @@ class AccessCredentialViewSetTests(APITestCase):
             username='test', password='password', email='admin@myproject.com')
         self.test_user = User.objects.get(username='test')
         self.client.force_login(self.super_user)
-        return super().setUp()
 
     def tearDown(self):
         self.client.logout()
-        return super().tearDown()
+        self.connect_signal()
+        super().tearDown()
 
     def test_accesscredential_list_get(self):
         url = reverse('monitoring:accesscredential-list')

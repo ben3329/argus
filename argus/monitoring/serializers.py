@@ -172,19 +172,19 @@ class AccessCredentialUpdateSerializer(serializers.ModelSerializer):
 
 
 class ScriptListSerializer(serializers.ModelSerializer):
-    user_detail = UserSerializer(source='user', read_only=True)
+    author_detail = UserSerializer(source='author', read_only=True)
 
     class Meta:
         model = UserDefinedScript
-        fields = ['id', 'user', 'user_detail', 'name', 'note']
+        fields = ['id', 'author', 'author_detail', 'name', 'note']
 
 
 class ScriptRetrieveSerializer(serializers.ModelSerializer):
-    user_detail = UserSerializer(source='user', read_only=True)
+    user_detail = UserSerializer(source='author', read_only=True)
 
     class Meta:
         model = UserDefinedScript
-        fields = ['id', 'user', 'user_detail', 'name',
+        fields = ['id', 'author', 'user_detail', 'name',
                   'language', 'code', 'authority', 'output_type',
                   'note', 'create_date', 'update_date', 'revision']
 
@@ -192,13 +192,13 @@ class ScriptRetrieveSerializer(serializers.ModelSerializer):
 class ScriptCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserDefinedScript
-        fields = ['user', 'name', 'language', 'code',
+        fields = ['author', 'name', 'language', 'code',
                   'authority', 'output_type', 'note']
 
     def validate_name(self, value):
         model = self.Meta.model
-        user = self.initial_data.get('user')
-        if model.objects.filter(user=user, name=value).exists():
+        author = self.initial_data.get('author')
+        if model.objects.filter(author=author, name=value).exists():
             raise serializers.ValidationError(
                 "Script with this name already exists.")
         return value
@@ -207,18 +207,19 @@ class ScriptCreateSerializer(serializers.ModelSerializer):
 class ScriptUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserDefinedScript
-        fields = ['user', 'name', 'language', 'code',
+        fields = ['author', 'name', 'language', 'code',
                   'authority', 'output_type', 'note']
 
     def validate_name(self, value):
         model = self.Meta.model
-        user = self.initial_data.get('user')
-        if model.objects.filter(user=user, name=value).exclude(id=self.instance.id).exists():
+        author = self.initial_data.get('author')
+        if model.objects.filter(author=author, name=value).exclude(id=self.instance.id).exists():
             raise serializers.ValidationError(
                 "Script with this name already exists.")
         return value
 
 
+# For scrape client
 class AccessCredentialSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessCredential
@@ -242,11 +243,10 @@ class BuiltInScriptSerializer(serializers.ModelSerializer):
 class UserDefinedScriptSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserDefinedScript
-        fields = ['name', 'language', 'code',
-                  'authority', 'output_type', 'note']
+        fields = ['name', 'language', 'code', 'output_type']
 
 
-class MonitorSerializer(serializers.ModelSerializer):
+class MonitorToScrapeSerializer(serializers.ModelSerializer):
     asset = AssetSerializer()
     script = serializers.SerializerMethodField()
     recipients = UserSerializer(many=True)
@@ -261,7 +261,7 @@ class MonitorSerializer(serializers.ModelSerializer):
         recipients = ret['recipients']
         ret['recipients'] = [r['email'] for r in recipients]
         return ret
-    
+
     def get_script(self, obj):
         if obj.user_defined_script:
             return UserDefinedScriptSerializer(obj.user_defined_script).data

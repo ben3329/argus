@@ -244,8 +244,8 @@ class ScriptViewSet(mixins.ListModelMixin,
     def get_queryset(self):
         user = self.request.user
         queryset = self.queryset.filter(
-            Q(user=user) | Q(authority=AuthorityChoices.public)).order_by(
-                Case(When(user=user, then=0), default=1), 'user', '-update_date'
+            Q(author=user) | Q(authority=AuthorityChoices.public)).order_by(
+                Case(When(author=user, then=0), default=1), 'author', '-update_date'
         )
         return queryset
 
@@ -267,7 +267,7 @@ class ScriptViewSet(mixins.ListModelMixin,
     )
     def create(self, request: Request, *args, **kwargs) -> Response:
         data = deepcopy(request.data)
-        data['user'] = request.user.id
+        data['author'] = request.user.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -278,7 +278,7 @@ class ScriptViewSet(mixins.ListModelMixin,
     @action(detail=False, methods=['delete'], url_path='delete_bulk')
     def delete_bulk(self, request: Request) -> Response:
         ids = request.data.getlist('ids[]')
-        self.queryset.filter(id__in=ids, user=request.user).delete()
+        self.queryset.filter(id__in=ids, author=request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
@@ -291,7 +291,7 @@ class ScriptViewSet(mixins.ListModelMixin,
     )
     def update(self, request: Request, *args, **kwargs) -> Response:
         data = deepcopy(request.data)
-        data['user'] = request.user.id
+        data['author'] = request.user.id
 
         partial = kwargs.pop('partial', False)
         instance = self.get_object()

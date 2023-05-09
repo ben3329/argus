@@ -2,19 +2,23 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
-from ..models import *
-from ..swagger_schema import *
+
+from monitoring.models import *
+from monitoring.swagger_schema import *
+from monitoring.tests.common import CommonMethods
+
 import math
 
-
-class AssetViewSetTests(APITestCase):
+class AssetViewSetTests(APITestCase, CommonMethods):
     def create_asset(self, user: User, access_cred: AccessCredential = None, cnt: int = 10) -> None:
         for i in range(cnt):
             q = Asset(user=user, name=f'{user.username}test{str(i)}', ip='1.1.1.1'+str(i),
-                      access_credential=access_cred)
+                      access_credential=access_cred, asset_type='linux')
             q.save()
 
     def setUp(self):
+        super().setUp()
+        self.disconnect_signal()
         User = get_user_model()
 
         User.objects.create_superuser(
@@ -36,10 +40,10 @@ class AssetViewSetTests(APITestCase):
         self.test_cred.save()
 
         self.client.force_login(self.super_user)
-        return super().setUp()
 
     def tearDown(self):
         self.client.logout()
+        self.connect_signal()
         return super().tearDown()
 
     def test_asset_list_get(self):
@@ -89,6 +93,7 @@ class AssetViewSetTests(APITestCase):
             'name': 'test asset',
             'ip': '127.0.0.1',
             'port': 22,
+            'asset_type': 'linux',
             'access_credential': self.admin_cred.id,
             'user': self.super_user
         }

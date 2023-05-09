@@ -1,9 +1,8 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
 from monitoring.models import *
-from monitoring.serializers import MonitorSerializer
-import json
-import redis
+from monitoring.scrape_client import ScrapeClient
 
 @receiver(post_save, sender=Monitor)
 @receiver(post_save, sender=Asset)
@@ -24,9 +23,5 @@ def create_scrape(sender, instance, **kwargs):
         case UserDefinedScript():
             instance_list = Monitor.objects.filter(user_defined_script=instance)
     
-    redis_client = redis.Redis(host='redis', port=6379, db=0)
-    for instance in instance_list:
-        serialized_data = MonitorSerializer(instance=instance).data
-        redis_client.lpush(
-            'web_to_engine',
-            json.dumps({'cmd':'create', 'serialized_data':serialized_data}))
+    scrape_client = ScrapeClient()
+    scrape_client.create(instance_list=instance_list)

@@ -2,22 +2,27 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
-from ..models import *
-from ..swagger_schema import *
+
+from monitoring.models import *
+from monitoring.swagger_schema import *
+from monitoring.tests.common import CommonMethods
+
 import math
 from typing import Union
 from datetime import datetime
 import secrets
 
 
-class ScriptViewSetTests(APITestCase):
-    def create_script(self, user: User, authority: Union[AuthorityChoices, str], cnt: int = 10) -> None:
+class ScriptViewSetTests(APITestCase, CommonMethods):
+    def create_script(self, author: User, authority: Union[AuthorityChoices, str], cnt: int = 10) -> None:
         for i in range(cnt):
-            q = UserDefinedScript(user=user, name=secrets.token_hex(5), language=LanguageChoices.shell,
+            q = UserDefinedScript(author=author, name=secrets.token_hex(5), language=LanguageChoices.shell,
                        code='ls', authority=authority, output_type=OutputTypeChoices.none)
             q.save()
 
     def setUp(self):
+        super().setUp()
+        self.disconnect_signal()
         User = get_user_model()
 
         User.objects.create_superuser(
@@ -29,11 +34,11 @@ class ScriptViewSetTests(APITestCase):
         self.test_user = User.objects.get(username='test')
 
         self.client.force_login(self.super_user)
-        return super().setUp()
 
     def tearDown(self):
         self.client.logout()
-        return super().tearDown()
+        self.connect_signal()
+        super().tearDown()
 
     def test_script_list_get(self):
         url = reverse('monitoring:script-list')
@@ -69,27 +74,27 @@ class ScriptViewSetTests(APITestCase):
         data = response.json()
         for idx, d in enumerate(data['results']):
             if idx < cnt:
-                self.assertEqual(d['user'], self.super_user.id)
+                self.assertEqual(d['author'], self.super_user.id)
             else:
-                self.assertEqual(d['user'], self.test_user.id)
+                self.assertEqual(d['author'], self.test_user.id)
 
     def test_script_list_get_order_by_update_date(self):
-        q = UserDefinedScript(user=self.super_user, name='2', language=LanguageChoices.shell,
+        q = UserDefinedScript(author=self.super_user, name='2', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
-        q = UserDefinedScript(user=self.super_user, name='1', language=LanguageChoices.shell,
+        q = UserDefinedScript(author=self.super_user, name='1', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
-        q = UserDefinedScript(user=self.super_user, name='0', language=LanguageChoices.shell,
+        q = UserDefinedScript(author=self.super_user, name='0', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
-        q = UserDefinedScript(user=self.test_user, name='5', language=LanguageChoices.shell,
+        q = UserDefinedScript(author=self.test_user, name='5', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
-        q = UserDefinedScript(user=self.test_user, name='4', language=LanguageChoices.shell,
+        q = UserDefinedScript(author=self.test_user, name='4', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
-        q = UserDefinedScript(user=self.test_user, name='3', language=LanguageChoices.shell,
+        q = UserDefinedScript(author=self.test_user, name='3', language=LanguageChoices.shell,
                    code='ls', authority=AuthorityChoices.public, output_type=OutputTypeChoices.none)
         q.save()
         obj = UserDefinedScript.objects.get(name='0')
@@ -230,7 +235,7 @@ class ScriptViewSetTests(APITestCase):
         self.create_script(self.super_user, AuthorityChoices.public.value, 1)
         script = UserDefinedScript.objects.all().first()
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
-        data = {'user': self.super_user, 'name': script.name,
+        data = {'author': self.super_user, 'name': script.name,
                 'language': script.language, 'code': script.code,
                 'authority': AuthorityChoices.private.value,
                 'output_type': script.output_type,
@@ -243,7 +248,7 @@ class ScriptViewSetTests(APITestCase):
         script = UserDefinedScript.objects.all().first()
         old_date = script.update_date
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
-        data = {'user': self.super_user, 'name': script.name,
+        data = {'author': self.super_user, 'name': script.name,
                 'language': script.language, 'code': script.code,
                 'authority': AuthorityChoices.private.value,
                 'output_type': script.output_type,
@@ -257,7 +262,7 @@ class ScriptViewSetTests(APITestCase):
         script = UserDefinedScript.objects.all().first()
         old_date = script.create_date
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
-        data = {'user': self.super_user, 'name': script.name,
+        data = {'author': self.super_user, 'name': script.name,
                 'language': script.language, 'code': script.code,
                 'authority': AuthorityChoices.private.value,
                 'output_type': script.output_type,
@@ -271,7 +276,7 @@ class ScriptViewSetTests(APITestCase):
         script = UserDefinedScript.objects.all().first()
         self.assertEqual(script.revision, 1)
         url = reverse('monitoring:script-detail', kwargs={'pk': script.id})
-        data = {'user': self.super_user, 'name': script.name,
+        data = {'author': self.super_user, 'name': script.name,
                 'language': script.language, 'code': script.code,
                 'authority': AuthorityChoices.private.value,
                 'output_type': script.output_type,
