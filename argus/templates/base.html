@@ -102,19 +102,21 @@
                 Script
             </a>
         </li>
-        <li class="nav-item" 
-            {% if view_name == 'monitoring:config' %}
-                style="background-color: #5d7285"
-            {% endif %}
-        >
-            <a href="{% url 'monitoring:config' %}"
-                class="nav-link {% if view_name == 'monitoring:config' %} active {% else %} text-gray {% endif %}"
+        {% if user.is_superuser %}
+            <li class="nav-item" 
                 {% if view_name == 'monitoring:config' %}
-                    aria-current="page" style="color: white"
-                {% endif %}>
-                Config
-            </a>
-        </li>
+                    style="background-color: #5d7285"
+                {% endif %}
+            >
+                <a href="{% url 'monitoring:config' %}"
+                    class="nav-link {% if view_name == 'monitoring:config' %} active {% else %} text-gray {% endif %}"
+                    {% if view_name == 'monitoring:config' %}
+                        aria-current="page" style="color: white"
+                    {% endif %}>
+                    User Management
+                </a>
+            </li>
+        {% endif %}
     </ul>
 </div>
 {% endwith %}

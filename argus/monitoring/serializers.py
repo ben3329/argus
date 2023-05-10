@@ -30,30 +30,20 @@ class AssetViewSetSerializer(serializers.ModelSerializer):
         read_only_fields = ['author_detail', 'access_credential_detail', 'create_date'] 
 
 
-class AccessCredentialListSerializer(serializers.ModelSerializer):
+class AccessCredentialViewSetSerializer(serializers.ModelSerializer):
+    author = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    author_detail = UserSerializer(source='author', read_only=True)
+
     class Meta:
         model = AccessCredential
-        fields = ['id', 'user', 'name', 'access_type',
+        fields = ['id', 'author', 'author_detail', 'name', 'access_type',
                   'username', 'password', 'secret', 'note',
                   'create_date']
-
-
-class AccessCredentialCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AccessCredential
-        fields = ['user', 'name', 'access_type',
-                  'username', 'password', 'secret', 'note']
-
-    def validate_name(self, value):
-        user = self.initial_data.get('user')
-        if AccessCredential.objects.filter(user=user, name=value).exists():
-            raise serializers.ValidationError(
-                "AccessCredential with this name already exists.")
-        return value
+        read_only_fields = ['author_detail', 'create_date'] 
 
     def validate_access_type(self, value):
         if ('_password') in value:
-            if self.initial_data.get('username') == None or self.initial_data.get('password') == None:
+            if self.initial_data.get('password') == None:
                 raise serializers.ValidationError(
                     "username and password field is required.")
         else:
@@ -61,47 +51,6 @@ class AccessCredentialCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "secret field is required.")
         return value
-
-    def validate_username(self, value):
-        if ('_password' in self.initial_data.get('access_type')) and not value:
-            raise serializers.ValidationError("This field is required.")
-
-    def validate_password(self, value):
-        if ('_password' in self.initial_data.get('access_type')) and not value:
-            raise serializers.ValidationError("This field is required.")
-
-    def validate_secret(self, value):
-        if ('_password' not in self.initial_data.get('access_type')) and not value:
-            raise serializers.ValidationError("This field is required.")
-
-
-class AccessCredentialUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AccessCredential
-        fields = ['user', 'name', 'access_type',
-                  'username', 'password', 'secret', 'note']
-
-    def validate_name(self, value):
-        user = self.initial_data.get('user')
-        if AccessCredential.objects.filter(user=user, name=value).exclude(id=self.instance.id).exists():
-            raise serializers.ValidationError(
-                "AccessCredential with this name already exists.")
-        return value
-
-    def validate_access_type(self, value):
-        if ('_password') in value:
-            if self.initial_data.get('username') == None or self.initial_data.get('password') == None:
-                raise serializers.ValidationError(
-                    "username and password field is required.")
-        else:
-            if self.initial_data.get('secret') == None:
-                raise serializers.ValidationError(
-                    "secret field is required.")
-        return value
-
-    def validate_username(self, value):
-        if ('_password' in self.initial_data.get('access_type')) and not value:
-            raise serializers.ValidationError("This field is required.")
 
     def validate_password(self, value):
         if ('_password' in self.initial_data.get('access_type')) and not value:

@@ -25,7 +25,7 @@ pagination_properties = {
         type=openapi.TYPE_INTEGER, description="Total number of object that can be listed"),
 }
 
-user_detail_properties = {
+author_detail_properties = {
     'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="The unique identifier of the user"),
     'username': openapi.Schema(type=openapi.TYPE_STRING, description="The name of user"),
     'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL, description="User's email")
@@ -42,8 +42,8 @@ delete_bulk_api_properties = {
 access_credential_properties = {
     'id': openapi.Schema(
         type=openapi.TYPE_INTEGER, description="The unique identifier of the access credential"),
-    'user': openapi.Schema(
-        type=openapi.TYPE_INTEGER, description="The ID of the user that owns the access credential"),
+    'author': openapi.Schema(
+        type=openapi.TYPE_INTEGER, description="The ID of the user that creates the access credential"),
     'name': openapi.Schema(
         type=openapi.TYPE_STRING,
         description="The name of the access credential"),
@@ -54,7 +54,7 @@ access_credential_properties = {
         description="A access type of credential"),
     'username': openapi.Schema(
         type=openapi.TYPE_STRING,
-        description="The username to be used for login with this access credential. Required if access_type ends with '_password'"),
+        description="The username to be used for login with this access credential."),
     'password': openapi.Schema(
         type=openapi.TYPE_STRING,
         description="The password to be used for login with this access credential. Required if access_type ends with '_password'"),
@@ -89,7 +89,7 @@ access_credential_list_api_response = {
 }
 
 access_credential_create_api_required_properties = [
-    'name',
+    'name', 'assess_type', 'username'
 ]
 
 access_credential_create_api_properties = filter_properties(
@@ -123,11 +123,11 @@ access_credential_simple_api_response = {
 asset_properties = {
     'id': openapi.Schema(
         type=openapi.TYPE_INTEGER, description="The unique identifier of the asset"),
-    'user': openapi.Schema(
+    'author': openapi.Schema(
         type=openapi.TYPE_INTEGER, description="The ID of the user that owns the asset"),
-    'user_detail': openapi.Schema(
+    'author_detail': openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        properties=user_detail_properties),
+        properties=author_detail_properties),
     'name': openapi.Schema(
         type=openapi.TYPE_STRING,
         description="The name of the asset"),
@@ -177,7 +177,7 @@ asset_list_api_response = {
 }
 
 asset_create_api_required_properties = [
-    'name', 'ip', 'access_credential'
+    'name', 'ip', 'port', 'asset_type', 'access_credential'
 ]
 
 asset_create_api_properties = filter_properties(
@@ -212,7 +212,7 @@ script_properties = {
         type=openapi.TYPE_INTEGER, description="The ID of the user that owns the script"),
     'user_detail': openapi.Schema(
         type=openapi.TYPE_OBJECT,
-        properties=user_detail_properties),
+        properties=author_detail_properties),
     'name': openapi.Schema(
         type=openapi.TYPE_STRING, description="A name of script"),
     'language': openapi.Schema(

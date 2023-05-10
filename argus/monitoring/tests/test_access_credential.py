@@ -10,9 +10,9 @@ import math
 
 
 class AccessCredentialViewSetTests(APITestCase, CommonMethods):
-    def create_access_credential(self, user: User, cnt: int = 10):
+    def create_access_credential(self, author: User, cnt: int = 10):
         for i in range(cnt):
-            q = AccessCredential(user=user, name=f'{user.username}test{str(i)}',
+            q = AccessCredential(author=author, name=f'{author.username}test{str(i)}',
                                  access_type=AccessTypeChoices.ssh_password,
                                  username='root', password='qwer1234')
             q.save()
@@ -55,14 +55,6 @@ class AccessCredentialViewSetTests(APITestCase, CommonMethods):
         self.assertEqual(len(data['results']), page_size)
         self.assertEqual(data['total_pages'], math.ceil(cred_cnt/page_size))
 
-    def test_asset_list_get_only_mine(self):
-        cred_cnt = 10
-        self.create_access_credential(self.test_user, cred_cnt)
-        url = reverse('monitoring:accesscredential-list')
-        response = self.client.get(url)
-        data = response.json()
-        self.assertEqual(data['total_items'], 0)
-
     def test_accesscredential_create_post(self):
         url = reverse('monitoring:accesscredential-list')
         data = {
@@ -73,23 +65,48 @@ class AccessCredentialViewSetTests(APITestCase, CommonMethods):
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-    def test_accesscredential_create_post_password_empty(self):
+    
+    def test_accesscredential_create_post_without_permission(self):
+        self.client.logout()
+        self.client.force_login(self.test_user)
         url = reverse('monitoring:accesscredential-list')
         data = {
             'name': 'test',
             'access_type': AccessTypeChoices.ssh_password.value,
-            'username': '',
+            'username': 'root',
+            'password': 'passwd'
+        }
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_accesscredential_create_post_password_type_password_empty(self):
+        url = reverse('monitoring:accesscredential-list')
+        data = {
+            'name': 'test',
+            'access_type': AccessTypeChoices.ssh_password.value,
+            'username': 'root',
             'password': ''
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_accesscredential_create_post_password_secret(self):
+    def test_accesscredential_create_post_password_type_username_empty(self):
         url = reverse('monitoring:accesscredential-list')
         data = {
             'name': 'test',
             'access_type': AccessTypeChoices.ssh_password.value,
+            'username': '',
+            'password': 'qwerqwerqwre'
+        }
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_accesscredential_create_post_password_type_without_password(self):
+        url = reverse('monitoring:accesscredential-list')
+        data = {
+            'name': 'test',
+            'access_type': AccessTypeChoices.ssh_password.value,
+            'username': 'root',
             'secret': 'asdfasdf'
         }
         response = self.client.post(url, data=data)
@@ -100,6 +117,7 @@ class AccessCredentialViewSetTests(APITestCase, CommonMethods):
         data = {
             'name': 'test',
             'access_type': AccessTypeChoices.ssh_password.value,
+            'username': 'root',
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -109,6 +127,7 @@ class AccessCredentialViewSetTests(APITestCase, CommonMethods):
         data = {
             'name': 'test',
             'access_type': AccessTypeChoices.ssh_private_key.value,
+            'username': 'root',
             'secret': 'qwerqwer'
         }
         response = self.client.post(url, data=data)
@@ -119,12 +138,13 @@ class AccessCredentialViewSetTests(APITestCase, CommonMethods):
         data = {
             'name': 'test',
             'access_type': AccessTypeChoices.ssh_private_key.value,
+            'username': 'root',
             'secret': ''
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_accesscredential_create_post_private_key_password(self):
+    def test_accesscredential_create_post_private_key_type_without_secret(self):
         url = reverse('monitoring:accesscredential-list')
         data = {
             'name': 'test',
@@ -140,6 +160,7 @@ class AccessCredentialViewSetTests(APITestCase, CommonMethods):
         data = {
             'name': 'test',
             'access_type': AccessTypeChoices.ssh_private_key.value,
+            'username': 'root',
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -171,10 +192,12 @@ class AccessCredentialViewSetTests(APITestCase, CommonMethods):
         self.assertEqual(AccessCredential.objects.all().count(),
                          cred_cnt - delete_cnt)
 
-    def test_accesscredential_delete_bulk_delete_cannot_delete_others(self):
+    def test_accesscredential_delete_bulk_delete_not_author(self):
         cred_cnt = 10
         delete_cnt = 5
-        self.create_access_credential(self.test_user, cred_cnt)
+        self.client.logout()
+        self.client.force_login(self.test_user)
+        self.create_access_credential(self.super_user, cred_cnt)
         url = reverse('monitoring:accesscredential-delete-bulk')
         cred_ids = [cred['id']
                     for cred in AccessCredential.objects.all().values('id')]
@@ -183,7 +206,7 @@ class AccessCredentialViewSetTests(APITestCase, CommonMethods):
         }
         response = self.client.delete(url, data=data)
 
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(AccessCredential.objects.all().count(), cred_cnt)
 
     def test_accesscredential_list_simple_get(self):

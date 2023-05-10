@@ -109,24 +109,19 @@ class AssetViewSet(mixins.CreateModelMixin,
 
 class AccessCredentialViewSet(mixins.CreateModelMixin,
                               mixins.ListModelMixin,
+                              BulkDeleteMixin,
                               GenericViewSet):
     queryset = AccessCredential.objects.all()
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAuthor, HasAddPermissionWithPost]
 
     def get_serializer_class(self):
         match self.action:
-            case 'list':
-                return AccessCredentialListSerializer
-            case 'create':
-                return AccessCredentialCreateSerializer
-            case 'update' | 'partial_update':
-                return AccessCredentialUpdateSerializer
             case 'list_simple':
                 return AccessCredentialSerializerSimple
             case _:
-                return None
+                return AccessCredentialViewSetSerializer
 
     @swagger_auto_schema(responses=access_credential_list_api_response)
     def list(self, request, *args, **kwargs):
@@ -142,26 +137,12 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
     )
     def create(self, request: Request, *args, **kwargs) -> Response:
         data = deepcopy(request.data)
-        data['user'] = request.user.id
+        data['author'] = request.user.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['ids[]'],
-            properties=delete_bulk_api_properties,
-        )
-    )
-    @action(detail=False, methods=['delete'], url_path='delete_bulk')
-    def delete_bulk(self, request: Request) -> Response:
-        ids = request.data.getlist('ids[]')
-        self.queryset.filter(id__in=ids, user=request.user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(responses=access_credential_simple_api_response)
     @action(detail=False, methods=['get'], url_path='simple')
@@ -319,7 +300,7 @@ def access_credential(request: HttpRequest) -> HttpResponse:
 
     data = response.json()
     if response.status_code == status.HTTP_200_OK:
-        context = {'user': request.user,
+        context = {'user': request.user, 'create_perm': request.user.has_perm('monitoring.add_accesscredential'),
                    'data': data, 'current': int(page_number)}
         return render(request, 'monitoring/access_credential.html', context)
     else:

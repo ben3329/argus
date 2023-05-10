@@ -1,3 +1,11 @@
+function setDefaultPort(accessType) {
+    if (!$('#id_port').val()) {
+        if (accessType.substr(0, 4) === 'ssh_') {
+            $('#id_port').val('22');
+        }
+    }
+}
+
 function setAccessCredential(select_id = -1) {
     $.ajax({
         url: accessCredentialApi + 'simple',
@@ -14,13 +22,22 @@ function setAccessCredential(select_id = -1) {
                 select.append(option);
                 option.attr('selected', true);
             }
+            var set_selected = false;
             $.each(accessCredentials, function (index, accessCredential) {
                 var option = $('<option>').val(accessCredential.id).text(accessCredential.name);
+                option.attr('data-access-type', accessCredential.access_type)
                 if (select_id == accessCredential.id) {
                     option.attr('selected', true);
+                    set_selected = true;
                 }
                 select.append(option);
             });
+            var select = $('#id_access_credential');
+            var options = select.find('option');
+            if (set_selected === false) {
+                options.first().prop('selected', true);
+                setDefaultPort(options.first().data('access-type'));
+            }
         },
         error: function (xhr, status, error) {
             $('#warningMessage').text(error).removeClass('d-none');
@@ -79,5 +96,18 @@ $(function () {
         assetTypeField.val(assetAssetType);
         accessCredentialField.val(assetAccessCredential);
         noteField.val(assetNote);
+    });
+});
+
+$(document).ready(function () {
+    $('#id_access_credential').on('change', function () {
+        var accessCredentialId = $(this).val();
+        if (accessCredentialId === '') {
+            $('#id_port').val('');
+        } else {
+            var selectedOption = $(this).find('option:selected');
+            var accessType = selectedOption.data('access-type');
+            setDefaultPort(accessType);
+        }
     });
 });

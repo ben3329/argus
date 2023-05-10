@@ -19,7 +19,7 @@ class AccessCredential(models.Model):
     name = models.CharField(max_length=31, unique=True)
     access_type = models.CharField(
         choices=AccessTypeChoices.choices, max_length=31)
-    username = models.CharField(max_length=31, null=True, blank=True)
+    username = models.CharField(max_length=31)
     password = models.CharField(max_length=31, null=True, blank=True)
     secret = models.TextField(null=True, blank=True)
     note = models.TextField(null=True, blank=True)
@@ -34,8 +34,7 @@ class Asset(models.Model):
     name = models.CharField(max_length=31, unique=True)
     ip = models.GenericIPAddressField()
     port = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(65535)],
-        default=22)
+        validators=[MinValueValidator(1), MaxValueValidator(65535)])
     asset_type = models.CharField(
         choices=AssetTypeChoices.choices, max_length=15)
     access_credential = models.ForeignKey(
