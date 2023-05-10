@@ -15,9 +15,11 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.db.models import Q, Case, When
 
-from .serializers import *
-from .models import *
-from .swagger_schema import *
+from monitoring.serializers import *
+from monitoring.models import *
+from monitoring.swagger_schema import *
+from monitoring.permissions import *
+from monitoring.mixins import *
 
 import requests
 import logging
@@ -43,31 +45,18 @@ class Pagination(PageNumberPagination):
 class AssetViewSet(mixins.CreateModelMixin,
                    mixins.ListModelMixin,
                    mixins.UpdateModelMixin,
+                   BulkDeleteMixin,
                    GenericViewSet):
+    serializer_class = AssetViewSetSerializer
     queryset = Asset.objects.all()
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
-    permission_classes = [IsAuthenticated]
-
-    def get_serializer_class(self):
-        match self.action:
-            case 'list':
-                return AssetListSerializer
-            case 'create':
-                return AssetCreateSerializer
-            case 'update' | 'partial_update':
-                return AssetUpdateSerializer
-            case _:
-                return None
+    permission_classes = [IsAuthenticated, IsAuthor, HasAddPermissionWithPost]
 
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated:
-            if user.is_superuser:
-                queryset = self.queryset.order_by('-create_date')
-            else:
-                queryset = self.queryset.filter(
-                    user=user).order_by('-create_date')
+            queryset = self.queryset.order_by('-create_date')
         else:
             queryset = Asset.objects.none()
         return queryset
@@ -86,7 +75,7 @@ class AssetViewSet(mixins.CreateModelMixin,
     )
     def create(self, request: Request, *args, **kwargs) -> Response:
         data = deepcopy(request.data)
-        data['user'] = request.user.id
+        data['author'] = request.user.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -94,21 +83,6 @@ class AssetViewSet(mixins.CreateModelMixin,
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['ids[]'],
-            properties=delete_bulk_api_properties,
-        )
-    )
-    @action(detail=False, methods=['delete'], url_path='delete_bulk')
-    def delete_bulk(self, request: Request) -> Response:
-        ids = request.data.getlist('ids[]')
-        if request.user.is_superuser:
-            self.queryset.filter(id__in=ids).delete()
-        else:
-            self.queryset.filter(id__in=ids, user=request.user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -118,22 +92,8 @@ class AssetViewSet(mixins.CreateModelMixin,
         ),
         responses=asset_create_api_response
     )
-    def update(self, request: Request, *args, **kwargs) -> Response:
-        data = deepcopy(request.data)
-        data['user'] = request.user.id
-
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -167,12 +127,6 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
                 return AccessCredentialSerializerSimple
             case _:
                 return None
-
-    def get_queryset(self):
-        user = self.request.user
-        queryset = self.queryset.filter(
-            user=user).order_by('-create_date')
-        return queryset
 
     @swagger_auto_schema(responses=access_credential_list_api_response)
     def list(self, request, *args, **kwargs):
@@ -341,7 +295,7 @@ def asset(request: HttpRequest) -> HttpResponse:
 
     data = response.json()
     if response.status_code == status.HTTP_200_OK:
-        context = {'user': request.user,
+        context = {'user': request.user, 'create_perm': request.user.has_perm('monitoring.add_asset'),
                    'data': data, 'current': int(page_number)}
         return render(request, 'monitoring/asset.html', context)
     else:

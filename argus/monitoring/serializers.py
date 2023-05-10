@@ -15,9 +15,9 @@ class AccessCredentialSerializerSimple(serializers.ModelSerializer):
         fields = ['id', 'name', 'access_type']
 
 
-class AssetListSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    user_detail = UserSerializer(source='user', read_only=True)
+class AssetViewSetSerializer(serializers.ModelSerializer):
+    author = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    author_detail = UserSerializer(source='author', read_only=True)
     access_credential = serializers.PrimaryKeyRelatedField(
         queryset=AccessCredential.objects.all())
     access_credential_detail = AccessCredentialSerializerSimple(
@@ -25,68 +25,9 @@ class AssetListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Asset
-        fields = ['id', 'user', 'user_detail', 'name', 'ip', 'port', 'asset_type',
+        fields = ['id', 'author', 'author_detail', 'name', 'ip', 'port', 'asset_type',
                   'access_credential', 'access_credential_detail', 'note', 'create_date']
-
-
-class AssetCreateSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    access_credential = serializers.PrimaryKeyRelatedField(
-        queryset=AccessCredential.objects.all())
-
-    class Meta:
-        model = Asset
-        fields = ['user', 'name', 'ip', 'port', 'asset_type',
-                  'access_credential', 'note']
-
-    def validate_name(self, value):
-        user = self.initial_data.get('user')
-        if Asset.objects.filter(user=user, name=value).exists():
-            raise serializers.ValidationError(
-                "Asset with this name already exists.")
-        return value
-
-    def validate_access_credential(self, value):
-        user = self.initial_data.get('user')
-        try:
-            cred = AccessCredential.objects.get(name=value)
-        except:
-            raise serializers.ValidationError(
-                "The Access Credential is not exist.")
-        if user != cred.user.id:
-            raise serializers.ValidationError(
-                "The Access Credential is not yours.")
-        return value
-
-
-class AssetUpdateSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    access_credential = serializers.PrimaryKeyRelatedField(
-        queryset=AccessCredential.objects.all())
-
-    class Meta:
-        model = Asset
-        fields = ['user', 'name', 'ip', 'port', 'asset_type',
-                  'access_credential', 'note']
-
-    def validate_name(self, value):
-        user = self.initial_data.get('user')
-        if Asset.objects.filter(user=user, name=value).exclude(id=self.instance.id).exists():
-            raise serializers.ValidationError(
-                "Asset with this name already exists.")
-        return value
-
-    def validate_access_credential(self, value):
-        user = self.initial_data.get('user')
-        try:
-            cred = AccessCredential.objects.get(name=value)
-        except:
-            raise serializers.ValidationError(
-                "The Access Credential is not exist.")
-        if user != cred.user.id:
-            raise serializers.ValidationError(
-                "The Access Credential is not yours.")
-        return value
+        read_only_fields = ['author_detail', 'access_credential_detail', 'create_date'] 
 
 
 class AccessCredentialListSerializer(serializers.ModelSerializer):

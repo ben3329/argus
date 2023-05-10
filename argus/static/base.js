@@ -31,7 +31,7 @@ $(document).ready(function () {
             type: form.attr('method'),
             data: form.serialize(),
             beforeSend: function (xhr) {
-                if (this.type == 'PUT') {
+                if (this.type == 'PUT' || this.type  == 'PATCH') {
                     xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
                 }
             },

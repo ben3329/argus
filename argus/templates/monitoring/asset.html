@@ -13,7 +13,9 @@
 </div>
 <div class="container">
     <div class="d-flex justify-content-end">
-        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#createModal" id="createNewButton">
+        <button class="btn btn-dark"
+            {% if not create_perm %} disabled {% endif %} 
+            data-bs-toggle="modal" data-bs-target="#createModal" id="createNewButton">
             Create
         </button>
         <button id="deleteButton" class="btn btn-dark ms-2">
@@ -107,9 +109,7 @@
             <th style="width: 5%">
                 <input type="checkbox" id="check-all">
             </th>
-            {% if user.is_staff %}
-            <th style="width: 7%">User</th>
-            {% endif %}
+            <th style="width: 7%">Author</th>
             <th>Name</th>
             <th>IP</th>
             <th>Port</th>
@@ -123,17 +123,26 @@
         {% for asset in data.results %}
         <tr class="text-center">
             <td>
-                <input type="checkbox" class="check-item" name="object-id" value="{{ asset.id }}">
+                {% if user.is_superuser or user.username == asset.author_detail.username %}
+                    <input type="checkbox" class="check-item" name="object-id" value="{{ asset.id }}">
+                {% endif %}
             </td>
-            {% if user.is_staff %}
-            <td>{{ asset.user_detail.username}}</td>
-            {% endif %}
-            {% if user.is_staff and user.username != asset.user_detail.username %}
-                    <td>{{ asset.name }}</td>
-            {% else %}
+            <td>{{ asset.author_detail.username}}</td>
+            {% if user.is_superuser or user.username == asset.author_detail.username %}
                 {% with access_credential_id=asset.access_credential|default:'' %}
-                    <td><a href="#" class="edit-asset" data-asset-name="{{ asset.name }}" data-asset-ip="{{ asset.ip }}" data-asset-port="{{ asset.port }}" data-asset-asset-type="{{ asset.asset_type }}" data-asset-access-credential="{{ access_credential_id }}" data-asset-note="{{ asset.note }}" data-asset-id="{{ asset.id }}">{{ asset.name }}</a></td>
+                    <td>
+                        <a href="#" class="edit-asset"
+                            data-asset-name="{{ asset.name }}"
+                            data-asset-ip="{{ asset.ip }}" data-asset-port="{{ asset.port }}"
+                            data-asset-asset-type="{{ asset.asset_type }}"
+                            data-asset-access-credential="{{ access_credential_id }}"
+                            data-asset-note="{{ asset.note }}" data-asset-id="{{ asset.id }}">
+                                {{ asset.name }}
+                        </a>
+                    </td>
                 {% endwith %}
+            {% else %}
+                    <td>{{ asset.name }}</td>
             {% endif %}
             <td>{{ asset.ip }}</td>
             <td>{{ asset.port }}</td>

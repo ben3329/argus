@@ -63,7 +63,7 @@ $(function () {
         // Set the form action URL to the asset update view
         var form = document.getElementById('formInModal');
         form.action = mainApi + assetId + '/';
-        form.method = 'put'
+        form.method = 'patch'
 
         // Set the form fields to the appropriate values
         var nameField = $('#id_name');

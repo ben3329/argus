@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+
 class AccessTypeChoices(models.TextChoices):
     ssh_password = 'ssh_password', 'SSH Password'
     ssh_private_key = 'ssh_private_key', 'SSH Private Key'
@@ -15,31 +16,22 @@ class AssetTypeChoices(models.TextChoices):
 
 
 class AccessCredential(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=31)
+    name = models.CharField(max_length=31, unique=True)
     access_type = models.CharField(
         choices=AccessTypeChoices.choices, max_length=31)
     username = models.CharField(max_length=31, null=True, blank=True)
     password = models.CharField(max_length=31, null=True, blank=True)
     secret = models.TextField(null=True, blank=True)
     note = models.TextField(null=True, blank=True)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     create_date = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'name'],
-                name='user_access_credential_name_unique_constraints',
-            )
-        ]
 
     def __str__(self):
         return self.name
 
 
 class Asset(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=31)
+    name = models.CharField(max_length=31, unique=True)
     ip = models.GenericIPAddressField()
     port = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
@@ -50,15 +42,8 @@ class Asset(models.Model):
         AccessCredential, on_delete=models.SET_NULL,
         null=True, blank=True)
     note = models.TextField(null=True, blank=True)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     create_date = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'name'],
-                name='user_asset_name_unique_constraints',
-            )
-        ]
 
 
 class LanguageChoices(models.TextChoices):
@@ -79,27 +64,17 @@ class OutputTypeChoices(models.TextChoices):
 
 
 class UserDefinedScript(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=31)
     language = models.CharField(
         choices=LanguageChoices.choices, max_length=15)
     code = models.TextField()
-    authority = models.CharField(
-        choices=AuthorityChoices.choices, max_length=15)
     output_type = models.CharField(
         choices=OutputTypeChoices.choices, max_length=15)
     note = models.TextField(null=True, blank=True)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     create_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
     revision = models.IntegerField(default=1)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['author', 'name'],
-                name='author_script_name_unique_constraints',
-            )
-        ]
 
     def save(self, *args, **kwargs):
         if self.pk is not None:
@@ -138,14 +113,15 @@ class Monitor(models.Model):
 class Scrape(models.Model):
     name = models.CharField(max_length=31, primary_key=True)
     status = models.CharField(max_length=31, default='Normal')
-    
+
     class Meta:
         db_table = 'scrape'
+
 
 class ScrapeData(models.Model):
     scrape = models.ForeignKey(Scrape, on_delete=models.CASCADE)
     datetime = models.DateTimeField(auto_now_add=True)
     data = models.JSONField()
-    
+
     class Meta:
         db_table = 'scrape_data'
