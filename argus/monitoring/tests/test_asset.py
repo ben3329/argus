@@ -12,7 +12,8 @@ import math
 class AssetViewSetTests(APITestCase, CommonMethods):
     def create_asset(self, author: User, access_cred: AccessCredential = None, cnt: int = 10) -> None:
         for i in range(cnt):
-            q = Asset(author=author, name=f'{author.username}test{str(i)}', ip='1.1.1.1'+str(i),
+            q = Asset(author=author, name=f'{author.username}test{str(i)}',
+                      ip='1.1.1.1'+str(i), port=22,
                       access_credential=access_cred, asset_type='linux')
             q.save()
 
@@ -48,13 +49,13 @@ class AssetViewSetTests(APITestCase, CommonMethods):
 
     def test_asset_list_get(self):
         url = reverse('monitoring:asset-list')
-        response = self.client.get(url)
+        response = self.client.get(url + '?ordering=-create_date')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_asset_list_get_unauthorized(self):
         self.client.logout()
         url = reverse('monitoring:asset-list')
-        response = self.client.get(url)
+        response = self.client.get(url + '?ordering=-create_date')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_asset_list_get_pagination(self):
@@ -62,7 +63,7 @@ class AssetViewSetTests(APITestCase, CommonMethods):
         page_size = 10
         self.create_asset(self.super_user, self.cred, asset_cnt)
         url = reverse('monitoring:asset-list')
-        response = self.client.get(url)
+        response = self.client.get(url + '?ordering=-create_date')
         data = response.json()
         self.assertEqual(len(data['results']), page_size)
         self.assertEqual(data['total_pages'], math.ceil(asset_cnt/page_size))

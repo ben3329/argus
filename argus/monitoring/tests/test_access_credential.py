@@ -36,13 +36,13 @@ class AccessCredentialViewSetTests(APITestCase, CommonMethods):
 
     def test_accesscredential_list_get(self):
         url = reverse('monitoring:accesscredential-list')
-        response = self.client.get(url)
+        response = self.client.get(url + '?ordering=-create_date')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_accesscredential_list_get_unauthorized(self):
         self.client.logout()
         url = reverse('monitoring:accesscredential-list')
-        response = self.client.get(url)
+        response = self.client.get(url + '?ordering=-create_date')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_asset_list_get_pagination(self):
@@ -50,7 +50,7 @@ class AccessCredentialViewSetTests(APITestCase, CommonMethods):
         page_size = 10
         self.create_access_credential(self.super_user, cred_cnt)
         url = reverse('monitoring:accesscredential-list')
-        response = self.client.get(url)
+        response = self.client.get(url + '?ordering=-create_date')
         data = response.json()
         self.assertEqual(len(data['results']), page_size)
         self.assertEqual(data['total_pages'], math.ceil(cred_cnt/page_size))

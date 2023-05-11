@@ -7,6 +7,15 @@ def filter_properties(fields: List[str], properties: Dict[str, openapi.Schema]) 
     return {k: v for k, v in properties.items() if k in fields}
 
 
+page_param = openapi.Parameter(
+    'page', in_=openapi.IN_QUERY, description='page number', type=openapi.TYPE_NUMBER
+)
+ordering_param = openapi.Parameter(
+    'ordering', in_=openapi.IN_QUERY,
+    description='A comma-separated list of fields to sort by. Use `-` prefix to sort in descending order.',
+    type=openapi.TYPE_STRING, example='-field1,field2'
+)
+
 pagination_properties = {
     'links': openapi.Schema(
         type=openapi.TYPE_OBJECT,
@@ -124,7 +133,7 @@ asset_properties = {
     'id': openapi.Schema(
         type=openapi.TYPE_INTEGER, description="The unique identifier of the asset"),
     'author': openapi.Schema(
-        type=openapi.TYPE_INTEGER, description="The ID of the user that owns the asset"),
+        type=openapi.TYPE_INTEGER, description="The ID of the user that creates the asset"),
     'author_detail': openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties=author_detail_properties),
@@ -208,9 +217,9 @@ asset_update_api_response = {
 script_properties = {
     'id': openapi.Schema(
         type=openapi.TYPE_INTEGER, description="The unique identifier of the script"),
-    'user': openapi.Schema(
-        type=openapi.TYPE_INTEGER, description="The ID of the user that owns the script"),
-    'user_detail': openapi.Schema(
+    'author': openapi.Schema(
+        type=openapi.TYPE_INTEGER, description="The ID of the user that creates the script"),
+    'author_detail': openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties=author_detail_properties),
     'name': openapi.Schema(
@@ -221,10 +230,6 @@ script_properties = {
         description="The programming language of the script"),
     'code': openapi.Schema(
         type=openapi.TYPE_STRING, description="The code of the script"),
-    'authority': openapi.Schema(
-        type=openapi.TYPE_STRING,
-        enum=[choice.value for choice in AuthorityChoices],
-        description="The authority level of the script"),
     'output_type': openapi.Schema(
         type=openapi.TYPE_STRING,
         enum=[choice.value for choice in OutputTypeChoices],
@@ -253,9 +258,7 @@ script_list_api_response = {
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Schema(
                         type=openapi.TYPE_OBJECT,
-                        properties=filter_properties(
-                            ['id', 'user', 'user_detail', 'name', 'note'],
-                            script_properties)
+                        properties=script_properties
                     )
                 )
             }
@@ -274,11 +277,11 @@ script_retrieve_api_response = {
 }
 
 script_create_api_required_properties = [
-    'name', 'language', 'code', 'authority', 'output_type'
+    'name', 'language', 'code', 'output_type'
 ]
 
 script_create_api_properties = filter_properties(
-    ['name', 'language', 'code', 'authority', 'output_type', 'note'],
+    ['name', 'language', 'code', 'output_type', 'note'],
     script_properties)
 
 script_create_api_response = {

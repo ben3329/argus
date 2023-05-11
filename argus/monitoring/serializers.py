@@ -61,52 +61,16 @@ class AccessCredentialViewSetSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This field is required.")
 
 
-class ScriptListSerializer(serializers.ModelSerializer):
+class UserDefinedScriptViewSetSerializer(serializers.ModelSerializer):
+    author = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     author_detail = UserSerializer(source='author', read_only=True)
 
     class Meta:
         model = UserDefinedScript
-        fields = ['id', 'author', 'author_detail', 'name', 'note']
-
-
-class ScriptRetrieveSerializer(serializers.ModelSerializer):
-    user_detail = UserSerializer(source='author', read_only=True)
-
-    class Meta:
-        model = UserDefinedScript
-        fields = ['id', 'author', 'user_detail', 'name',
-                  'language', 'code', 'authority', 'output_type',
+        fields = ['id', 'author', 'author_detail', 'name',
+                  'language', 'code', 'output_type',
                   'note', 'create_date', 'update_date', 'revision']
-
-
-class ScriptCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserDefinedScript
-        fields = ['author', 'name', 'language', 'code',
-                  'authority', 'output_type', 'note']
-
-    def validate_name(self, value):
-        model = self.Meta.model
-        author = self.initial_data.get('author')
-        if model.objects.filter(author=author, name=value).exists():
-            raise serializers.ValidationError(
-                "Script with this name already exists.")
-        return value
-
-
-class ScriptUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserDefinedScript
-        fields = ['author', 'name', 'language', 'code',
-                  'authority', 'output_type', 'note']
-
-    def validate_name(self, value):
-        model = self.Meta.model
-        author = self.initial_data.get('author')
-        if model.objects.filter(author=author, name=value).exclude(id=self.instance.id).exists():
-            raise serializers.ValidationError(
-                "Script with this name already exists.")
-        return value
+        read_only_fields = ['author_detail', 'create_date', 'update_date', 'revision'] 
 
 
 # For scrape client

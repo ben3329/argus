@@ -51,11 +51,6 @@ class LanguageChoices(models.TextChoices):
     shell = 'shell'
 
 
-class AuthorityChoices(models.TextChoices):
-    public = 'public'
-    private = 'private'
-
-
 class OutputTypeChoices(models.TextChoices):
     csv = 'csv'
     json = 'json'
@@ -63,7 +58,7 @@ class OutputTypeChoices(models.TextChoices):
 
 
 class UserDefinedScript(models.Model):
-    name = models.CharField(max_length=31)
+    name = models.CharField(max_length=31, unique=True)
     language = models.CharField(
         choices=LanguageChoices.choices, max_length=15)
     code = models.TextField()

@@ -11,7 +11,9 @@
 </div>
 <div class="container">
     <div class="d-flex justify-content-end">
-        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#createModal" id="createNewButton">
+        <button class="btn btn-dark"
+            {% if not create_perm %} disabled {% endif %} 
+            data-bs-toggle="modal" data-bs-target="#createModal" id="createNewButton">
             Create
         </button>
         <button id="deleteButton" class="btn btn-dark ms-2">
@@ -61,18 +63,6 @@
                         </div>
                         <div class="row mb-3 mx-2">
                             <div class="col-3">
-                                <label for="id_authority" class="form-label">Authority</label>
-                            </div>
-                            <div class="col-9">
-                                <select name="authority" class="form-control" id="id_authority">
-                                    <option value="private" selected>Private</option>
-                                    <option value="public">Public</option>
-                                </select>
-                                <div class="text-danger invalid-feedback"></div>
-                            </div>
-                        </div>
-                        <div class="row mb-3 mx-2">
-                            <div class="col-3">
                                 <label for="id_output_type" class="form-label">Output Type</label>
                             </div>
                             <div class="col-9">
@@ -111,7 +101,7 @@
             <th style="width: 5%">
                 <input type="checkbox" id="check-all">
             </th>
-            <th style="width: 7%">User</th>
+            <th style="width: 7%">Author</th>
             <th>Name</th>
             <th>Note</th>
         </tr>
@@ -121,13 +111,15 @@
         {% for script in data.results %}
         <tr class="text-center">
             <td>
-                <input type="checkbox" class="check-item" name="object-id" value="{{ script.id }}">
+                {% if user.is_superuser or user.username == script.author_detail.username %}
+                    <input type="checkbox" class="check-item" name="object-id" value="{{ script.id }}">
+                {% endif %}
             </td>
-            <td>{{ script.user_detail.username}}</td>
-            {% if user.username != script.user_detail.username %}
-                <td>{{ script.name }}</td>
-            {% else %}
+            <td>{{ script.author_detail.username}}</td>
+            {% if user.is_superuser or user.username == script.author_detail.username %}
                 <td><a href="#" class="edit-script" data-script-id="{{script.id}}">{{ script.name }}</a></td>
+            {% else %}
+                <td>{{ script.name }}</td>
             {% endif %}
             <td>{{ script.note }}</td>
         </tr>
