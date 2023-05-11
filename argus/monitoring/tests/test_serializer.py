@@ -13,12 +13,12 @@ class SerializerTests(TestCase, CommonMethods):
             username='admin', password='password', email='admin@myproject.com')
         self.super_user = User.objects.get(username='admin')
         self.cred = AccessCredential(
-            user=self.super_user, name=f'{self.super_user.username}-id-password',
+            author=self.super_user, name=f'{self.super_user.username}-id-password',
             access_type=AccessTypeChoices.ssh_password,
             username='root', password='sniper!#@$')
         self.cred.save()
         self.asset = Asset(
-            user=self.super_user,
+            author=self.super_user,
             ip='192.168.0.150', port=22, asset_type='linux',
             access_credential=self.cred)
         self.asset.save()
@@ -27,8 +27,7 @@ class SerializerTests(TestCase, CommonMethods):
         self.built_in_script.save()
         self.user_defined_script = UserDefinedScript(
             author=self.super_user, name='test_script', language='bash',
-            code='ls', authority=AuthorityChoices.public,
-            output_type=OutputTypeChoices.none)
+            code='ls', output_type=OutputTypeChoices.none)
         self.user_defined_script.save()
         self.monitor = Monitor(
             name='test_monitor', asset=self.asset,

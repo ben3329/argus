@@ -1,23 +1,23 @@
+from rest_framework import mixins, status, filters
 from rest_framework.viewsets import GenericViewSet
-from rest_framework import mixins
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework import status
 from rest_framework.decorators import action
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
-from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from django.db.models import Q, Case, When
+from drf_yasg.utils import swagger_auto_schema
 
-from .serializers import *
-from .models import *
-from .swagger_schema import *
+from monitoring.serializers import *
+from monitoring.models import *
+from monitoring.swagger_schema import *
+from monitoring.permissions import *
+from monitoring.mixins import *
 
 import requests
 import logging
@@ -43,36 +43,19 @@ class Pagination(PageNumberPagination):
 class AssetViewSet(mixins.CreateModelMixin,
                    mixins.ListModelMixin,
                    mixins.UpdateModelMixin,
+                   BulkDeleteMixin,
                    GenericViewSet):
     queryset = Asset.objects.all()
+    serializer_class = AssetViewSetSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['author', 'name', 'ip', 'port', 'asset_type', 'access_credential','create_date']
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAuthor, HasAddPermissionWithPost]
 
-    def get_serializer_class(self):
-        match self.action:
-            case 'list':
-                return AssetListSerializer
-            case 'create':
-                return AssetCreateSerializer
-            case 'update' | 'partial_update':
-                return AssetUpdateSerializer
-            case _:
-                return None
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_authenticated:
-            if user.is_superuser:
-                queryset = self.queryset.order_by('-create_date')
-            else:
-                queryset = self.queryset.filter(
-                    user=user).order_by('-create_date')
-        else:
-            queryset = Asset.objects.none()
-        return queryset
-
-    @swagger_auto_schema(responses=asset_list_api_response)
+    @swagger_auto_schema(
+        manual_parameters=[page_param, ordering_param],
+        responses=asset_list_api_response)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -86,7 +69,7 @@ class AssetViewSet(mixins.CreateModelMixin,
     )
     def create(self, request: Request, *args, **kwargs) -> Response:
         data = deepcopy(request.data)
-        data['user'] = request.user.id
+        data['author'] = request.user.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -94,21 +77,6 @@ class AssetViewSet(mixins.CreateModelMixin,
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['ids[]'],
-            properties=delete_bulk_api_properties,
-        )
-    )
-    @action(detail=False, methods=['delete'], url_path='delete_bulk')
-    def delete_bulk(self, request: Request) -> Response:
-        ids = request.data.getlist('ids[]')
-        if request.user.is_superuser:
-            self.queryset.filter(id__in=ids).delete()
-        else:
-            self.queryset.filter(id__in=ids, user=request.user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -118,22 +86,8 @@ class AssetViewSet(mixins.CreateModelMixin,
         ),
         responses=asset_create_api_response
     )
-    def update(self, request: Request, *args, **kwargs) -> Response:
-        data = deepcopy(request.data)
-        data['user'] = request.user.id
-
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -149,32 +103,25 @@ class AssetViewSet(mixins.CreateModelMixin,
 
 class AccessCredentialViewSet(mixins.CreateModelMixin,
                               mixins.ListModelMixin,
+                              BulkDeleteMixin,
                               GenericViewSet):
     queryset = AccessCredential.objects.all()
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['author', 'name', 'access_type', 'create_date']
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAuthor, HasAddPermissionWithPost]
 
     def get_serializer_class(self):
         match self.action:
-            case 'list':
-                return AccessCredentialListSerializer
-            case 'create':
-                return AccessCredentialCreateSerializer
-            case 'update' | 'partial_update':
-                return AccessCredentialUpdateSerializer
             case 'list_simple':
                 return AccessCredentialSerializerSimple
             case _:
-                return None
+                return AccessCredentialViewSetSerializer
 
-    def get_queryset(self):
-        user = self.request.user
-        queryset = self.queryset.filter(
-            user=user).order_by('-create_date')
-        return queryset
-
-    @swagger_auto_schema(responses=access_credential_list_api_response)
+    @swagger_auto_schema(
+        manual_parameters=[page_param, ordering_param],
+        responses=access_credential_list_api_response)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -188,32 +135,18 @@ class AccessCredentialViewSet(mixins.CreateModelMixin,
     )
     def create(self, request: Request, *args, **kwargs) -> Response:
         data = deepcopy(request.data)
-        data['user'] = request.user.id
+        data['author'] = request.user.id
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['ids[]'],
-            properties=delete_bulk_api_properties,
-        )
-    )
-    @action(detail=False, methods=['delete'], url_path='delete_bulk')
-    def delete_bulk(self, request: Request) -> Response:
-        ids = request.data.getlist('ids[]')
-        self.queryset.filter(id__in=ids, user=request.user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(responses=access_credential_simple_api_response)
     @action(detail=False, methods=['get'], url_path='simple')
     def list_simple(self, request: Request) -> Response:
         # pagination 없이 목록 전부 일부 필드만 가져옴
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -222,34 +155,19 @@ class ScriptViewSet(mixins.ListModelMixin,
                     mixins.RetrieveModelMixin,
                     mixins.CreateModelMixin,
                     mixins.UpdateModelMixin,
+                    BulkDeleteMixin,
                     GenericViewSet):
     queryset = UserDefinedScript.objects.all()
+    serializer_class = UserDefinedScriptViewSetSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['author', 'name', 'language', 'output_type', 'create_date', 'update_date']
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAuthor, HasAddPermissionWithPost]
 
-    def get_serializer_class(self):
-        match self.action:
-            case 'list':
-                return ScriptListSerializer
-            case 'retrieve':
-                return ScriptRetrieveSerializer
-            case 'create':
-                return ScriptCreateSerializer
-            case 'update' | 'partial_update':
-                return ScriptUpdateSerializer
-            case _:
-                return None
-
-    def get_queryset(self):
-        user = self.request.user
-        queryset = self.queryset.filter(
-            Q(author=user) | Q(authority=AuthorityChoices.public)).order_by(
-                Case(When(author=user, then=0), default=1), 'author', '-update_date'
-        )
-        return queryset
-
-    @swagger_auto_schema(responses=script_list_api_response)
+    @swagger_auto_schema(
+        manual_parameters=[page_param, ordering_param],
+        responses=script_list_api_response)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
     
@@ -275,12 +193,6 @@ class ScriptViewSet(mixins.ListModelMixin,
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    @action(detail=False, methods=['delete'], url_path='delete_bulk')
-    def delete_bulk(self, request: Request) -> Response:
-        ids = request.data.getlist('ids[]')
-        self.queryset.filter(id__in=ids, author=request.user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -290,21 +202,7 @@ class ScriptViewSet(mixins.ListModelMixin,
         responses=script_create_api_response
     )
     def update(self, request: Request, *args, **kwargs) -> Response:
-        data = deepcopy(request.data)
-        data['author'] = request.user.id
-
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
+        return super().update(request, *args, **kwargs)
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -334,14 +232,14 @@ def dashboard(request):
 @login_required
 def asset(request: HttpRequest) -> HttpResponse:
     page_number = request.GET.get('page', 1)
-    params = {'page': page_number}
+    params = {'page': page_number, 'ordering': '-create_date'}
     api_url = 'http://localhost:8080' + reverse('monitoring:asset-list')
     session = authorize_api(request)
     response = session.get(api_url, params=params)
 
     data = response.json()
     if response.status_code == status.HTTP_200_OK:
-        context = {'user': request.user,
+        context = {'user': request.user, 'create_perm': request.user.has_perm('monitoring.add_asset'),
                    'data': data, 'current': int(page_number)}
         return render(request, 'monitoring/asset.html', context)
     else:
@@ -357,7 +255,7 @@ def monitor(request):
 @login_required
 def access_credential(request: HttpRequest) -> HttpResponse:
     page_number = request.GET.get('page', 1)
-    params = {'page': page_number}
+    params = {'page': page_number, 'ordering': '-create_date'}
     api_url = 'http://localhost:8080' + \
         reverse('monitoring:accesscredential-list')
     session = authorize_api(request)
@@ -365,7 +263,7 @@ def access_credential(request: HttpRequest) -> HttpResponse:
 
     data = response.json()
     if response.status_code == status.HTTP_200_OK:
-        context = {'user': request.user,
+        context = {'user': request.user, 'create_perm': request.user.has_perm('monitoring.add_accesscredential'),
                    'data': data, 'current': int(page_number)}
         return render(request, 'monitoring/access_credential.html', context)
     else:
@@ -375,14 +273,14 @@ def access_credential(request: HttpRequest) -> HttpResponse:
 @login_required
 def script(request):
     page_number = request.GET.get('page', 1)
-    params = {'page': page_number}
+    params = {'page': page_number, 'ordering': '-update_date'}
     api_url = 'http://localhost:8080' + reverse('monitoring:script-list')
     session = authorize_api(request)
     response = session.get(api_url, params=params)
 
     data = response.json()
     if response.status_code == status.HTTP_200_OK:
-        context = {'user': request.user,
+        context = {'user': request.user, 'create_perm': request.user.has_perm('monitoring.add_script'),
                    'data': data, 'current': int(page_number)}
         return render(request, 'monitoring/script.html', context)
     else:
