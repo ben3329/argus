@@ -3,10 +3,11 @@ from typing import Literal, TypeAlias, Union
 # access_credential
 ACCESS_TYPE: TypeAlias = Literal['ssh_password', 'ssh_private_key']
 
-# script
+# user_defined_script
 OUTPUT_TYPE: TypeAlias = Literal['none', 'json', 'csv']
-LINUX_SYSTEM_MEMORY_FIELDS: TypeAlias = Literal['used', 'utilization']
-# BUILT_IN_FIELDS: TypeAlias = Union[LINUX_SYSTEM_MEMORY_FIELDS]
+
+# scrape
+SCRAPE_CATEGORY: TypeAlias = Literal['linux_system_memory', 'user_defined_script']
 
 # report
 REPORT_TYPE_IMAGE: TypeAlias = Literal['graph24']

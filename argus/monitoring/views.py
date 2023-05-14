@@ -215,6 +215,42 @@ class ScriptViewSet(mixins.ListModelMixin,
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
+class MonitorViewSet(mixins.ListModelMixin,
+                     mixins.CreateModelMixin,
+                    GenericViewSet):
+    queryset = Monitor.objects.all()
+    serializer_class = MonitorViewSetSerializer
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['name', 'author', 'create_date']
+    pagination_class = Pagination
+    renderer_classes = [JSONRenderer]
+    permission_classes = [IsAuthenticated, IsAuthor, HasAddPermissionWithPost]
+
+    @swagger_auto_schema(
+        manual_parameters=[page_param, ordering_param],
+        responses=script_list_api_response)
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=script_create_api_required_properties,
+            properties=script_create_api_properties,
+        ),
+        responses=script_create_api_response
+    )
+    def create(self, request: Request, *args, **kwargs) -> Response:
+        data = deepcopy(request.data)
+        data['author'] = request.user.id
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
 def authorize_api(request: HttpRequest) -> requests.Session:
     user = request.user
     token = user.auth_token.key

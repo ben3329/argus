@@ -26,14 +26,30 @@ $(document).ready(function () {
     $('#formInModal').submit(function (event) {
         event.preventDefault();
         var form = $(this);
+        var data = form.serializeArray();
+
+        var processedData = {};
+        $.each(data, function () {
+            var key = this.name.endsWith("[]") ? this.name.substring(0, this.name.length - 2) : this.name;
+            if (key.startsWith("tmp-")){
+                processedData[key.replace("tmp-", "")] = []
+                return true;
+            }
+            if (!processedData[key]) {
+                processedData[key] = this.name.endsWith("[]") ? [this.value] : this.value;
+            } else {
+                if (Array.isArray(processedData[key])) {
+                    processedData[key].push(this.value);
+                }
+            }
+        });
         $.ajax({
             url: form.attr('action'),
             type: form.attr('method'),
-            data: form.serialize(),
+            data: JSON.stringify(processedData),
+            contentType: 'application/json',
             beforeSend: function (xhr) {
-                if (this.type == 'PUT' || this.type  == 'PATCH') {
-                    xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
-                }
+                xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
             },
             success: function (response) {
                 $('#createModal').modal('hide');

@@ -33,10 +33,6 @@ class ScrapeManager(object):
         return self.scrape_model.asset.access_credential
 
     @property
-    def script(self):
-        return self.scrape_model.script
-
-    @property
     def status(self):
         return self._status
 
@@ -46,21 +42,19 @@ class ScrapeManager(object):
             await self.dbclient.set_scrape_status(self.scrape_model.name, value)
 
     async def scrape_data(self) -> None:
-        match self.script:
-            case BuiltInScriptModel():
-                try:
-                    data = await self._built_in_scrape()
-                except Exception as e:
-                    await self._error(e)
-                    return
-            case UserDefinedScriptModel():
+        match self.scrape_model.scrape_category:
+            case 'user_defined_script':
                 try:
                     data = await self._user_defined_scrape()
                 except Exception as e:
                     await self._error(e)
                     return
             case _:
-                raise
+                try:
+                    data = await self._built_in_scrape()
+                except Exception as e:
+                    await self._error(e)
+                    return
         if data:
             try:
                 if await self.dbclient.insert_data(self.scrape, data):
@@ -104,19 +98,22 @@ class ScrapeManager(object):
                 raise ValueError(
                     f"Invalid access_type. access_type:{access_type}")
         # set scraper and get data
-        match (self.script.category, self.asset.asset_type):
+        match (self.scrape_model.scrape_category , self.asset.asset_type):
             case 'linux_system_memory', 'linux':
-                scraper = built_in_scripts.linux_system_memory.LinuxSystemMemory(
-                    conn)
+                if self.scrape_model.scrape_parameters:
+                    scraper = built_in_scripts.linux_system_memory.LinuxSystemMemory(
+                        conn, **self.scrape_model.scrape_parameters)
+                else:
+                    scraper = built_in_scripts.linux_system_memory.LinuxSystemMemory(conn)
             case category, asset_type:
                 raise ValueError(
                     f"Invalid built in script. category: {category}, asset_type: {asset_type}")
         await scraper.get_data()
         conn.close()
         result = OrderedDict()
-        for field in self.script.fields:
+        for field in self.scrape_model.scrape_fields:
             try:
-                result.update({field: getattr(scraper)})
+                result.update({field: getattr(scraper, field)})
             except:
                 result.update({field: None})
         return result
@@ -134,31 +131,39 @@ class ScrapeManager(object):
                 raise ValueError(
                     f"Invalid access_type. access_type:{access_type}")
         # upload script to asset
+        script = self.scrape_model.user_defined_script
         match self.asset.asset_type:
             case 'linux':
-                file_name = f'/tmp/{self.script.name}_{self.script.revision}'
+                file_name = f'/tmp/{script.name}_{script.revision}'
                 await self.__upload_script(conn, file_name)
             case asset_type:
                 raise ValueError(
                     f"Invalid asset_type. access_type:{asset_type}")
         # run script
-        output = await conn.run(f"{self.script.language} {file_name}")
+        param = ''
+        if self.scrape_model.scrape_parameters:
+            for key, value in self.scrape_model.scrape_parameters.items():
+                param += f' {key} {value}'
+        output = await conn.run(f"{script.language} {file_name} {param}", check=True)
+        metric = output.stdout
         conn.close()
-        if self.script.output_type == 'none':
+        if script.output_type == 'none':
             return None
         else:
-            return self.__convert_metric_to_dict(output.stdout)
+            return self.__convert_metric_to_dict(
+                metric, self.scrape_model.user_defined_script.output_type,
+                self.scrape_model.scrape_fields)
 
     async def __upload_script(self, conn: asyncssh.SSHClientConnection, path: str):
         async with conn.start_sftp_client() as sftp:
             try:
                 async with sftp.open(path, 'w') as f:
-                    await f.write(self.script.code)
+                    await f.write(self.scrape_model.user_defined_script.code)
             except Exception as e:
                 raise ScriptUploadError(
-                    self.scrape_model.name, self.script.name, str(e))
+                    self.scrape_model.name, self.scrape_model.user_defined_script.name, str(e))
 
-    def __convert_metric_to_dict(self, metric: str) -> Dict[str, Union[int, float]]:
+    def __convert_metric_to_dict(self, metric: str, metric_type: str, fields: List[str]) -> Dict[str, Union[int, float]]:
         def is_valid_data(obj: Any) -> bool:
             if not isinstance(obj, dict):
                 return False
@@ -169,13 +174,14 @@ class ScrapeManager(object):
                     return False
             return True
 
-        if self.script.output_type == 'json':
+        if metric_type == 'json':
             data = json.loads(metric)
             if is_valid_data(data):
-                result = data
+                selected_data = {k: data[k] for k in fields if k in data}
+                result = selected_data
             else:
                 raise ValueError(f"Invalid data type. Data:{data}")
-        elif self.script.output_type == 'csv':
+        elif metric_type == 'csv':
             result = OrderedDict()
             data = metric.strip().split('\n')
             if len(data) != 2:
@@ -189,5 +195,6 @@ class ScrapeManager(object):
                     value = int(value)
                 except:
                     value = float(value)
-                result.update({key: value})
+                if key in fields:
+                    result.update({key: value})
         return result

@@ -2,17 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-
-class AccessTypeChoices(models.TextChoices):
-    ssh_password = 'ssh_password', 'SSH Password'
-    ssh_private_key = 'ssh_private_key', 'SSH Private Key'
-
-    def __str__(self) -> str:
-        return self.value[1]
-
-
-class AssetTypeChoices(models.TextChoices):
-    linux = 'linux', 'Linux'
+from monitoring.choices import *
 
 
 class AccessCredential(models.Model):
@@ -45,18 +35,6 @@ class Asset(models.Model):
     create_date = models.DateTimeField(auto_now_add=True)
 
 
-class LanguageChoices(models.TextChoices):
-    python3 = 'python3'
-    python2 = 'python2'
-    shell = 'shell'
-
-
-class OutputTypeChoices(models.TextChoices):
-    csv = 'csv'
-    json = 'json'
-    none = 'none'
-
-
 class UserDefinedScript(models.Model):
     name = models.CharField(max_length=31, unique=True)
     language = models.CharField(
@@ -64,6 +42,8 @@ class UserDefinedScript(models.Model):
     code = models.TextField()
     output_type = models.CharField(
         choices=OutputTypeChoices.choices, max_length=15)
+    fields = models.JSONField(null=True, blank=True)
+    parameters = models.JSONField(null=True, blank=True)
     note = models.TextField(null=True, blank=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     create_date = models.DateTimeField(auto_now_add=True)
@@ -76,22 +56,12 @@ class UserDefinedScript(models.Model):
         super().save(*args, **kwargs)
 
 
-class CategoryChoices(models.TextChoices):
-    linux_system_memory = 'linux_system_memory'
-
-
-class BuiltInScript(models.Model):
-    category = models.CharField(
-        choices=CategoryChoices.choices, max_length=31)
-    fields = models.JSONField()
-    parameter = models.JSONField(blank=True, null=True)
-
-
 class Monitor(models.Model):
     name = models.CharField(max_length=31, unique=True)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
-    built_in_script = models.ForeignKey(
-        BuiltInScript, on_delete=models.SET_NULL, null=True, blank=True)
+    scrape_category = models.CharField(choices=ScrapeCategoryChoices.choices, max_length=31)
+    scrape_fields = models.JSONField(blank=True, null=True)
+    scrape_parameter = models.JSONField(blank=True, null=True)
     user_defined_script = models.ForeignKey(
         UserDefinedScript, on_delete=models.SET_NULL, null=True, blank=True)
     interval = models.IntegerField(validators=[MinValueValidator(1)])

@@ -57,8 +57,32 @@
                                 <label for="id_code" class="form-label">Code</label>
                             </div>
                             <div class="col-9">
-                                <textarea name="code" cols="40" rows="5" class="form-control" id="id_code"></textarea>
+                                <textarea name="code" cols="40" rows="4" class="form-control" id="id_code"></textarea>
                                 <div class="text-danger invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="row mb-3 mx-2">
+                            <div class="col-3">
+                                <label for="id_parameters" class="form-label">Parameters</label>
+                            </div>
+                            <div class="col-9">
+                                <div class="input-group mb-1">
+                                    <input type="text" name="tmp-parameters[]" class="form-control col-10">
+                                    <button class="btn btn-outline-secondary col-2 param-button-addon" type="button">+</button>
+                                </div>
+                                <div class="text-danger invalid-feedback" id="parameters-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="row mb-3 mx-2">
+                            <div class="col-3">
+                                <label for="id_fields" class="form-label">Fields</label>
+                            </div>
+                            <div class="col-9">
+                                <div class="input-group mb-1">
+                                    <input type="text" name="tmp-fields[]" class="form-control col-10">
+                                    <button class="btn btn-outline-secondary col-2 fields-button-addon" type="button">+</button>
+                                </div>
+                                <div class="text-danger invalid-feedback" id="fields-feedback"></div>
                             </div>
                         </div>
                         <div class="row mb-3 mx-2">
@@ -79,7 +103,7 @@
                                 <label for="id_note" class="form-label">Note</label>
                             </div>
                             <div class="col-9">
-                                <textarea name="note" cols="40" rows="5" class="form-control" id="id_note"></textarea>
+                                <textarea name="note" cols="40" rows="2" class="form-control" id="id_note"></textarea>
                                 <div class="text-danger invalid-feedback"></div>
                             </div>
                         </div>

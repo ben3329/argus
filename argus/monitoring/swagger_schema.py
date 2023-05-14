@@ -1,5 +1,6 @@
 from drf_yasg import openapi
-from .models import *
+from monitoring.models import *
+from monitoring.choices import *
 from typing import Dict, List
 
 

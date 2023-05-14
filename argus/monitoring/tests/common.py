@@ -8,12 +8,10 @@ class CommonMethods(object):
         post_save.connect(create_scrape, sender=Monitor)
         post_save.connect(create_scrape, sender=Asset)
         post_save.connect(create_scrape, sender=AccessCredential)
-        post_save.connect(create_scrape, sender=BuiltInScript)
         post_save.connect(create_scrape, sender=UserDefinedScript)
 
     def disconnect_signal(self):
         post_save.disconnect(create_scrape, sender=Monitor)
         post_save.disconnect(create_scrape, sender=Asset)
         post_save.disconnect(create_scrape, sender=AccessCredential)
-        post_save.disconnect(create_scrape, sender=BuiltInScript)
         post_save.disconnect(create_scrape, sender=UserDefinedScript)
