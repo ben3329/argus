@@ -1,8 +1,8 @@
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import LoginView, PasswordResetView, PasswordResetConfirmView
 from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
-from common.forms import UserForm, CommonPasswordResetForm
 from django.views.decorators.http import require_POST
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -11,7 +11,14 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.urls import reverse
 from django.urls import reverse_lazy
+from rest_framework import filters
+from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.renderers import JSONRenderer
+from rest_framework.permissions import IsAuthenticated
 
+from common.forms import UserForm, CommonPasswordResetForm
+from common.serializers import UserSerializer
 
 # Create your views here.
 
@@ -106,3 +113,17 @@ class CommonPasswordResetConfirmView(PasswordResetConfirmView):
         context['uidb64'] = self.kwargs['uidb64']
         context['token'] = self.kwargs['token']
         return context
+    
+
+class RecipientsPagination(PageNumberPagination):
+    page_size = 5
+
+class RecipientsViewSet(ReadOnlyModelViewSet):
+    queryset = User.objects.order_by('username')
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username']
+    pagination_class = RecipientsPagination
+    renderer_classes = [JSONRenderer]
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    

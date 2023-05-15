@@ -27,22 +27,43 @@ $(document).ready(function () {
         event.preventDefault();
         var form = $(this);
         var data = form.serializeArray();
+        var key_subkey_pattern = /^([a-z,0-9]+)\[([a-z,0-9]+)\]$/i;
 
         var processedData = {};
         $.each(data, function () {
-            var key = this.name.endsWith("[]") ? this.name.substring(0, this.name.length - 2) : this.name;
+            var key = this.name;
+            var type = "string";
+            var match = null;
+            var subkey = null;
+            if (key.endsWith("[]")){
+                key = key.substring(0, this.name.length - 2);
+                type = "array";
+            } else if (match = key.match(key_subkey_pattern)){
+                key = match[1];
+                subkey = match[2]; 
+                type = "dict";
+            }
             if (key.startsWith("tmp-")){
                 processedData[key.replace("tmp-", "")] = []
                 return true;
             }
             if (!processedData[key]) {
-                processedData[key] = this.name.endsWith("[]") ? [this.value] : this.value;
+                if (type === "string"){
+                    processedData[key] = this.value;
+                } else if (type === "array") {
+                    processedData[key] = [this.value];
+                } else if (type === "dict") {
+                    processedData[key] = {[subkey]:this.value};
+                }
             } else {
                 if (Array.isArray(processedData[key])) {
                     processedData[key].push(this.value);
+                } else if (Object.prototype.toString.call(processedData[key]) === "[object Object]") {
+                    processedData[key][subkey] = this.value;
                 }
             }
         });
+        console.log(JSON.stringify(processedData));
         $.ajax({
             url: form.attr('action'),
             type: form.attr('method'),

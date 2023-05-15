@@ -18,6 +18,7 @@ from monitoring.models import *
 from monitoring.swagger_schema import *
 from monitoring.permissions import *
 from monitoring.mixins import *
+from monitoring.choices import *
 
 import requests
 import logging
@@ -46,12 +47,18 @@ class AssetViewSet(mixins.CreateModelMixin,
                    BulkDeleteMixin,
                    GenericViewSet):
     queryset = Asset.objects.all()
-    serializer_class = AssetViewSetSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['author', 'name', 'ip', 'port', 'asset_type', 'access_credential','create_date']
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
     permission_classes = [IsAuthenticated, IsAuthor, HasAddPermissionWithPost]
+    
+    def get_serializer_class(self):
+        match self.action:
+            case 'list_simple':
+                return AssetSerializerSimple 
+            case _:
+                return AssetViewSetSerializer
 
     @swagger_auto_schema(
         manual_parameters=[page_param, ordering_param],
@@ -99,6 +106,14 @@ class AssetViewSet(mixins.CreateModelMixin,
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(responses=asset_simple_api_response)
+    @action(detail=False, methods=['get'], url_path='simple')
+    def list_simple(self, request: Request) -> Response:
+        # pagination 없이 목록 전부 일부 필드만 가져옴
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class AccessCredentialViewSet(mixins.CreateModelMixin,
@@ -158,12 +173,18 @@ class ScriptViewSet(mixins.ListModelMixin,
                     BulkDeleteMixin,
                     GenericViewSet):
     queryset = UserDefinedScript.objects.all()
-    serializer_class = UserDefinedScriptViewSetSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['author', 'name', 'language', 'output_type', 'create_date', 'update_date']
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
     permission_classes = [IsAuthenticated, IsAuthor, HasAddPermissionWithPost]
+
+    def get_serializer_class(self):
+        match self.action:
+            case 'list_simple':
+                return UserDefinedScriptSerializerSimple
+            case _:
+                return UserDefinedScriptViewSetSerializer
 
     @swagger_auto_schema(
         manual_parameters=[page_param, ordering_param],
@@ -214,6 +235,14 @@ class ScriptViewSet(mixins.ListModelMixin,
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
+    
+    @swagger_auto_schema(responses=script_simple_api_response)
+    @action(detail=False, methods=['get'], url_path='simple')
+    def list_simple(self, request: Request) -> Response:
+        # pagination 없이 목록 전부 일부 필드만 가져옴
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class MonitorViewSet(mixins.ListModelMixin,
                      mixins.CreateModelMixin,
@@ -322,26 +351,39 @@ def script(request):
     else:
         return HttpResponseBadRequest(data['detail'])
 
+def get_scrape_choices() -> list:
+    result = []
+    for category in ScrapeCategoryChoices.choices:
+        match category:
+            case 'linux_system_memory', ref:
+                fields = json.dumps(LinuxSystemMemoryFieldsChoices.names + ['aaa', 'bbb', 'ccc'])
+                # parameters = '[]'
+                parameters = json.dumps(['p1', 'p2'])
+            case _:
+                fields = '[]'
+                parameters = '[]'
+        result.append(list(category) + [fields, parameters])
+    return result
+        
+
+@login_required
+def monitor(request):
+    page_number = request.GET.get('page', 1)
+    params = {'page': page_number, 'ordering': '-create_date'}
+    api_url = 'http://localhost:8080' + reverse('monitoring:monitor-list')
+    session = authorize_api(request)
+    response = session.get(api_url, params=params)
+
+    data = response.json()
+    if response.status_code == status.HTTP_200_OK:
+        context = {'user': request.user, 'create_perm': request.user.has_perm('monitoring.add_monitor'),
+                   'data': data, 'current': int(page_number),
+                   'scrape_choices': get_scrape_choices(), 'report_list': ReportListChoices.choices}
+        return render(request, 'monitoring/monitor.html', context)
+    else:
+        return HttpResponseBadRequest(data['detail'])
 
 @login_required
 def config(request):
     context = {'user': request.user}
     return render(request, 'monitoring/config.html', context)
-
-
-@login_required
-def detail(request, asset_id):
-    asset = get_object_or_404(Asset, pk=asset_id)
-    context = {'asset': asset, 'username': request.user.username}
-    return render(request, 'monitoring/asset_detail.html', context)
-
-
-def monitoring_create(request, asset_id):
-    asset = get_object_or_404(Asset, pk=asset_id)
-    post_data = request.POST
-    asset.monitoring_set.create(
-        user=asset.user,
-        name=post_data.get('name'),
-        target_system=post_data.get('target_system')
-    )
-    return redirect('monitoring:detail', asset_id=asset.id)

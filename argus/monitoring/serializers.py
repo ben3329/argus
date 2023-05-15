@@ -14,6 +14,16 @@ class AccessCredentialSerializerSimple(serializers.ModelSerializer):
         model = AccessCredential
         fields = ['id', 'name', 'access_type']
 
+class AssetSerializerSimple(serializers.ModelSerializer):
+    class Meta:
+        model = Asset
+        fields = ['id', 'name']
+
+class UserDefinedScriptSerializerSimple(serializers.ModelSerializer):
+    class Meta:
+        model = UserDefinedScript
+        fields = ['id', 'name', 'fields', 'parameters']
+
 
 class AssetViewSetSerializer(serializers.ModelSerializer):
     author = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
@@ -84,15 +94,21 @@ class MonitorViewSetSerializer(serializers.ModelSerializer):
     user_defined_script_name = serializers.ReadOnlyField(source='user_defined_script.name')
     author = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     author_name = serializers.ReadOnlyField(source='author.username')
+    scrape_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Monitor
         fields = ['id', 'name', 'asset', 'asset_name',
                   'scrape_category', 'scrape_fields', 'scrape_parameter',
                   'user_defined_script', 'user_defined_script_name',
+                  'scrape_status',
                   'interval', 'report_time', 'report_list', 'recipients',
                   'author', 'author_name', 'create_date']
-        read_only_fields = ['name', 'asset_name', 'user_defined_script_name', 'author_name', 'create_date'] 
+        read_only_fields = ['name', 'asset_name', 'user_defined_script_name',
+                            'scrape_status', 'author_name', 'create_date']
+    def get_scrape_status(self, obj):
+        scrape = Scrape.objects.filter(name=obj.name).first()
+        return scrape.status if scrape else None
 
 
 # For scrape client

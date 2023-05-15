@@ -67,7 +67,8 @@ $(document).ready(function () {
         var inputValue = $('input[name="tmp-parameters[]"]').val();
         if (inputValue) {
             var inputGroup = '<div class="input-group mb-1 param-input-group">'
-                + '<input type="text" name="parameters[]" class="form-control col-10" value="' + inputValue + '" readonly>'
+                + '<input type="text" name="parameters[]" class="form-control col-10" '
+                + 'id="id_parameters.' + inputValue + '" value="' + inputValue + '" readonly>'
                 + '<button class="btn btn-outline-secondary col-2 param-button-remove" type="button">-</button>'
                 + '</div>';
 
@@ -86,7 +87,8 @@ $(document).ready(function () {
         var inputValue = $('input[name="tmp-fields[]"]').val();
         if (inputValue) {
             var inputGroup = '<div class="input-group mb-1 fields-input-group">'
-                + '<input type="text" name="fields[]" class="form-control col-10" value="' + inputValue + '" readonly>'
+                + '<input type="text" name="fields[]" class="form-control col-10" '
+                + 'id="id_fields.' + inputValue + '" value="' + inputValue + '" readonly>'
                 + '<button class="btn btn-outline-secondary col-2 field-button-remove" type="button">-</button>'
                 + '</div>';
 

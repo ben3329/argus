@@ -1,4 +1,5 @@
 from django.db import models
+import json
 
 
 class AccessTypeChoices(models.TextChoices):
@@ -36,12 +37,9 @@ class ScrapeCategoryChoices(models.TextChoices):
         return self.value[1]
 
 
-class LinuxSystemMemoryChoices(models.TextChoices):
-    used = 'used', 'Used Memory. Unit: KB'
-    utilization = 'utilization', 'Memory Used Rate. Unit: %'
-
-    def __str__(self) -> str:
-        return self.value[1]
+class LinuxSystemMemoryFieldsChoices(models.TextChoices):
+    used = 'used'
+    utilization = 'utilization'
 
 
 class ReportListChoices(models.TextChoices):
