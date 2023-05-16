@@ -12,7 +12,7 @@ class TestScrapeManager(TestCase):
         initializer(modules=['database'])
         with open('user_defined_script.py', 'r') as f:
             code = f.read()
-        asset = {
+        self.asset = {
             'ip': IP, 'port': PORT, 'asset_type': 'linux',
             'access_credential': {
                     'access_type': 'ssh_password',
@@ -21,7 +21,7 @@ class TestScrapeManager(TestCase):
                 }}
         self.user_defined = {
             'name': 'test',
-            'asset': asset,
+            'asset': self.asset,
             'scrape_category': 'user_defined_script',
             'scrape_fields': ['field1'],
             'scrape_parameters': {'--data': 2}, 
@@ -40,10 +40,10 @@ class TestScrapeManager(TestCase):
 
         self.built_in = {
             'name': 'test',
-            'asset': asset,
+            'asset': self.asset,
             'scrape_category': 'linux_system_memory',
             'scrape_fields': ['used'],
-            'interval': 5,
+            'interval': 1,
             'report_time': '* * * * *',
             'report_list': ['diff']}
 
@@ -91,6 +91,14 @@ class TestScrapeManager(TestCase):
         scrape_manager = await ScrapeManager.create(model, init_tortoise=False)
         await scrape_manager.scrape_data()
         self.assertEqual(scrape_manager.status, 'Normal')
+    
+    async def test_scrape_built_in_linux_system_memory_conn_error(self):
+        self.asset['ip'] = '1.1.1.1'
+        self.built_in['asset'] = self.asset
+        model = ScrapeModel.parse_obj(self.built_in)
+        scrape_manager = await ScrapeManager.create(model, init_tortoise=False)
+        await scrape_manager.scrape_data()
+        self.assertEqual(scrape_manager.status, 'TimeoutError')
 
     async def test_scrape_user_defined(self):
         model = ScrapeModel.parse_obj(self.user_defined)

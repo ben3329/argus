@@ -2,10 +2,11 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
+from django.test import TestCase
 
-from monitoring.models import *
 from monitoring.tests.common import CommonMethods
-
+from monitoring.models import *
+from monitoring.serializers import AccessCredentialViewSetSerializer
 import math
 
 
@@ -232,3 +233,21 @@ class AccessCredentialViewSetTests(APITestCase, CommonMethods):
         cred.save()
         new_date = AccessCredential.objects.all().first().create_date
         self.assertEqual(old_date, new_date)
+    
+    def test_viewset_sericalizer(self):
+        self.data = {
+            'name': 'test', 'access_type': 'ssh_password',
+            'username': 'root', 'password': 'passwd',
+            'secret': '', 'note': '', 'author': 1}
+        serializer = AccessCredentialViewSetSerializer(data=self.data)
+        self.assertEqual(serializer.is_valid(), True)
+        instance = serializer.save()
+        self.assertEqual(instance.name, self.data['name'])
+        self.assertEqual(instance.access_type, self.data['access_type'])
+        self.assertEqual(instance.username, self.data['username'])
+        self.assertEqual(instance.password, self.data['password'])
+        self.assertEqual(instance.secret, self.data['secret'])
+        self.assertEqual(instance.note, self.data['note'])
+        self.assertEqual(instance.author.id, self.data['author'])
+        
+

@@ -66,10 +66,12 @@ class AccessCredentialViewSetSerializer(serializers.ModelSerializer):
     def validate_password(self, value):
         if ('_password' in self.initial_data.get('access_type')) and not value:
             raise serializers.ValidationError("This field is required.")
+        return value
 
     def validate_secret(self, value):
         if ('_password' not in self.initial_data.get('access_type')) and not value:
             raise serializers.ValidationError("This field is required.")
+        return value
 
 
 class UserDefinedScriptViewSetSerializer(serializers.ModelSerializer):
@@ -99,12 +101,12 @@ class MonitorViewSetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Monitor
         fields = ['id', 'name', 'asset', 'asset_name',
-                  'scrape_category', 'scrape_fields', 'scrape_parameter',
+                  'scrape_category', 'scrape_fields', 'scrape_parameters',
                   'user_defined_script', 'user_defined_script_name',
                   'scrape_status',
                   'interval', 'report_time', 'report_list', 'recipients',
                   'author', 'author_name', 'create_date']
-        read_only_fields = ['name', 'asset_name', 'user_defined_script_name',
+        read_only_fields = ['asset_name', 'user_defined_script_name',
                             'scrape_status', 'author_name', 'create_date']
     def get_scrape_status(self, obj):
         scrape = Scrape.objects.filter(name=obj.name).first()
@@ -140,7 +142,7 @@ class MonitorToScrapeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Monitor
         fields = ['name', 'asset',
-                  'scrape_category', 'scrape_fields', 'scrape_parameter',
+                  'scrape_category', 'scrape_fields', 'scrape_parameters',
                   'user_defined_script',
                   'interval', 'report_time', 'report_list', 'recipients']
 

@@ -14,7 +14,7 @@ class LinuxSystemMemory(object):
 
     @property
     def utilization(self):
-        return (self.data['used'] / self.data['total']) * 100
+        return round((self.data['used'] / self.data['total']) * 100, 2)
 
     async def get_data(self):
         if self.conn == None:

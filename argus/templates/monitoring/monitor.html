@@ -60,7 +60,7 @@
                                         <label for="id_asset" class="form-label">Asset</label>
                                     </div>
                                     <div class="col-8">
-                                        <select name="scrape_asset" class="form-control" id="id_asset">
+                                        <select name="asset" class="form-control" id="id_asset">
                                             <option selected>------</option>
                                         </select>
                                         <div class="text-danger invalid-feedback"></div>
@@ -143,19 +143,19 @@
                                 </div>
                                 <div class="row mb-3 mx-2">
                                     <div class="col-4">
-                                        <label for="id_fields" class="form-label">Fields</label>
+                                        <label for="id_scrape_fields" class="form-label">Fields</label>
                                     </div>
                                     <div class="col-8">
-                                        <input type="hidden" name="tmp-fields[]" id="hiddenFields">
-                                        <div class="text-danger invalid-feedback" id="fields-feedback"></div>
+                                        <input type="hidden" name="tmp-scrape_fields[]" id="id_scrape_fields">
+                                        <div class="text-danger invalid-feedback" id="scrape_fields-feedback"></div>
                                     </div>
                                 </div>
                                 <div class="row mb-3 mx-2">
                                     <div class="col-4">
-                                        <label for="id_parameters" class="form-label">Parameters</label>
+                                        <label for="id_scrape_parameters" class="form-label">Parameters</label>
                                     </div>
                                     <div class="col-8">
-                                        <div class="text-danger invalid-feedback" id="parameters-feedback"></div>
+                                        <div class="text-danger invalid-feedback" id="scrape_parameters-feedback"></div>
                                     </div>
                                 </div>
                             </div>

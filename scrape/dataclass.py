@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator, EmailStr
+from pydantic import BaseModel, validator, EmailStr, constr
 import type_alias
 from typing import Optional, List, Dict, Union, Literal
 from collections import OrderedDict
@@ -18,7 +18,7 @@ class AccessCredentialModel(BaseModel):
 
 
 class UserDefinedScriptModel(BaseModel):
-    name: str
+    name: constr(min_length=1)
     language: Literal['python2', 'python3', 'bash']
     code: str
     output_type: type_alias.OUTPUT_TYPE
@@ -36,7 +36,7 @@ class AssetModel(BaseModel):
 
 
 class ScrapeModel(BaseModel):
-    name: str
+    name: constr(min_length=1)
     asset: AssetModel
     scrape_category: type_alias.SCRAPE_CATEGORY
     scrape_fields: Optional[List[str]] = None
@@ -50,7 +50,8 @@ class ScrapeModel(BaseModel):
     @validator('report_time')
     def validate_report_time(cls, v):
         try:
-            croniter(v)
+            if v:
+                croniter(v)
             return v
         except:
             raise ValueError('Invalid report time format')

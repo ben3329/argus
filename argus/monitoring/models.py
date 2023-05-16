@@ -61,14 +61,14 @@ class Monitor(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     scrape_category = models.CharField(choices=ScrapeCategoryChoices.choices, max_length=31)
     scrape_fields = models.JSONField(blank=True, null=True)
-    scrape_parameter = models.JSONField(blank=True, null=True)
+    scrape_parameters = models.JSONField(blank=True, null=True)
     user_defined_script = models.ForeignKey(
         UserDefinedScript, on_delete=models.SET_NULL, null=True, blank=True)
     interval = models.IntegerField(validators=[MinValueValidator(1)])
     report_time = models.CharField(max_length=15, null=True, blank=True)
-    report_list = models.JSONField()
+    report_list = models.JSONField(null=True, blank=True)
     recipients = models.ManyToManyField(
-        User, related_name='monitor_recipients')
+        User, related_name='monitor_recipients', blank=True)
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='monitors')
     create_date = models.DateTimeField(auto_now_add=True)

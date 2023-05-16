@@ -246,7 +246,10 @@ class ScriptViewSet(mixins.ListModelMixin,
 
 class MonitorViewSet(mixins.ListModelMixin,
                      mixins.CreateModelMixin,
-                    GenericViewSet):
+                     mixins.RetrieveModelMixin,
+                     mixins.UpdateModelMixin,
+                     BulkDeleteMixin,
+                     GenericViewSet):
     queryset = Monitor.objects.all()
     serializer_class = MonitorViewSetSerializer
     filter_backends = [filters.OrderingFilter]
@@ -261,6 +264,10 @@ class MonitorViewSet(mixins.ListModelMixin,
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
     
+    @swagger_auto_schema(responses=script_retrieve_api_response)
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -356,9 +363,8 @@ def get_scrape_choices() -> list:
     for category in ScrapeCategoryChoices.choices:
         match category:
             case 'linux_system_memory', ref:
-                fields = json.dumps(LinuxSystemMemoryFieldsChoices.names + ['aaa', 'bbb', 'ccc'])
-                # parameters = '[]'
-                parameters = json.dumps(['p1', 'p2'])
+                fields = json.dumps(LinuxSystemMemoryFieldsChoices.names)
+                parameters = '[]'
             case _:
                 fields = '[]'
                 parameters = '[]'

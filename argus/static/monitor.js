@@ -30,18 +30,18 @@ function fetchAsset(select_id) {
 }
 
 function fetchFields(fields) {
-    $('.fields-group').remove();
+    $('.scrape_fields-group').remove();
     var colCount = 0;
-    var row = $('<div class="row fields-group"></div>');
+    var row = $('<div class="row scrape_fields-group"></div>');
     fields.forEach(function(field) {
         var fieldsGroup = '<div class="col-6">'
-                        + '<input type="checkbox" class="mx-1" id="id_fields.' + field + '" name="fields[]" value="' + field + '">'
-                        + '<label for="id_fields.' + field +'">' + field + '</label>'
+                        + '<input type="checkbox" class="mx-1" id="id_scrape_fields.' + field + '" name="scrape_fields[]" value="' + field + '">'
+                        + '<label for="id_scrape_fields.' + field +'">' + field + '</label>'
                         + '</div>';
 
         if (colCount % 2 == 0) { // 새로운 행을 시작
-            row = $('<div class="row fields-group"></div>');
-            $(row).insertBefore($('#fields-feedback'));
+            row = $('<div class="row scrape_fields-group"></div>');
+            $(row).insertBefore($('#scrape_fields-feedback'));
         }
         $(row).append($(fieldsGroup));
         colCount++;
@@ -49,14 +49,14 @@ function fetchFields(fields) {
 }
 
 function fetchParameters(parameters) {
-    $('.parameters-group').remove();
+    $('.scrape_parameters-group').remove();
     parameters.forEach(function(parameter) {
-        var parametersGroup = '<div class="input-group mb-1 parameters-group">'
+        var parametersGroup = '<div class="input-group mb-1 scrape_parameters-group">'
             + '<span class="input-group-text col-4">' + parameter + '</span>'
-            + '<input type="text" name="parameters[' + parameter + ']" '
-            + 'class="form-control col-8" id="id_parameters.' + parameter + '">'
+            + '<input type="text" name="scrape_parameters[' + parameter + ']" '
+            + 'class="form-control col-8" id="id_scrape_parameters.' + parameter + '">'
             + '</div>';
-        $(parametersGroup).insertBefore($('#parameters-feedback'));
+        $(parametersGroup).insertBefore($('#scrape_parameters-feedback'));
     });
 }
 
@@ -116,8 +116,8 @@ $(document).ready(function () {
         var scrapeCategoryId = $(this).val();
         if (scrapeCategoryId === 'user_defined_script') {
             fetchUserDefinedScript();
-            $('.fields-group').remove();
-            $('.parameters-group').remove();
+            $('.scrape_fields-group').remove();
+            $('.scrape_parameters-group').remove();
         } else {
             $('#id_script').remove();
             var selectedOption = $(this).find('option:selected');
@@ -207,5 +207,46 @@ $(document).ready(function() {
         console.log(recipientsArray);
         console.log(id);
         $(this).parent().remove();
+    });
+});
+
+$(function () {
+    $('.edit-monitor').on('click', function (e) {
+        e.preventDefault();
+        var monitorId = $(this).data('monitor-id');
+        $.ajax({
+            url: mainApi + monitorId + '/',
+            type: 'GET',
+            success: function (response) {
+                var modal = new bootstrap.Modal(document.getElementById('createModal'), {
+                    keyboard: false,
+                    focus: true
+                });
+                modal.show();
+                $('#createButton').text('Update');
+                $('#warningMessage').text('').addClass('d-none');
+
+                // Set the form action URL to the asset update view
+                var form = document.getElementById('formInModal');
+                form.action = mainApi + monitorId + '/';
+                form.method = 'patch'
+
+                // Set the form fields to the appropriate values
+                var nameField = $('#id_name');
+                var intervalField = $('#id_interval');
+                var reportTimeField = $('#id_report_time');
+                var noteField = $('#id_note');
+
+                
+                nameField.val(response['name']);
+                intervalField.val(response['interval']);
+                reportTimeField.val(response['report_time']);
+                noteField.val(response['note']);
+
+            },
+            error: function (xhr, status, error) {
+                alert("Error: " + error)
+            }
+        });
     });
 });

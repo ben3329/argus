@@ -44,5 +44,5 @@ class SerializerTests(TestCase, CommonMethods):
         serializer = MonitorToScrapeSerializer(self.monitor)
         data = serializer.data
         self.assertEqual(list(data), [
-            'name', 'asset', 'scrape_category', 'scrape_fields', 'scrape_parameter',
+            'name', 'asset', 'scrape_category', 'scrape_fields', 'scrape_parameters',
             'user_defined_script', 'interval', 'report_time', 'report_list', 'recipients'])
