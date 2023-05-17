@@ -43,6 +43,7 @@ class DBClient:
         return cls._instance
 
     async def create_scrape(self, name: str) -> Scrape:
+        await Scrape.filter(name=name, status='Deleted').delete()
         scrape, created = await Scrape.get_or_create(name=name)
         if created == False:
             scrape.status = 'Normal'

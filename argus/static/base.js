@@ -27,7 +27,7 @@ $(document).ready(function () {
         event.preventDefault();
         var form = $(this);
         var data = form.serializeArray();
-        var key_subkey_pattern = /^([a-z,0-9]+)\[([a-z,0-9]+)\]$/i;
+        var key_subkey_pattern = /^(.+)\[(.+)\]$/i;
 
         var processedData = {};
         $.each(data, function () {
@@ -63,7 +63,6 @@ $(document).ready(function () {
                 }
             }
         });
-        console.log(JSON.stringify(processedData));
         $.ajax({
             url: form.attr('action'),
             type: form.attr('method'),

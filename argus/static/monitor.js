@@ -19,6 +19,7 @@ function fetchAsset(select_id) {
                 var option = $('<option>').val(asset.id).text(asset.name);
                 if (select_id == asset.id) {
                     option.attr('selected', true);
+                    select.attr('disabled', true);
                 }
                 select.append(option);
             });
@@ -29,16 +30,32 @@ function fetchAsset(select_id) {
     });
 }
 
-function fetchFields(fields) {
+function fetchFields(fields, scrape_fields) {
     $('.scrape_fields-group').remove();
     var colCount = 0;
     var row = $('<div class="row scrape_fields-group"></div>');
+    if (Array.isArray(scrape_fields)) {
+        $('#id_scrape_fields').attr('disabled', true);
+    }
     fields.forEach(function(field) {
-        var fieldsGroup = '<div class="col-6">'
-                        + '<input type="checkbox" class="mx-1" id="id_scrape_fields.' + field + '" name="scrape_fields[]" value="' + field + '">'
-                        + '<label for="id_scrape_fields.' + field +'">' + field + '</label>'
-                        + '</div>';
-
+        if (Array.isArray(scrape_fields)) {
+            if (scrape_fields.includes(field)){
+                var fieldsGroup = '<div class="col-6">'
+                                + '<input type="checkbox" checked disabled class="mx-1 scrape_fields" id="id_scrape_fields.' + field + '" name="scrape_fields[]" value="' + field + '">'
+                                + '<label for="id_scrape_fields.' + field +'">' + field + '</label>'
+                                + '</div>';
+            } else {
+                var fieldsGroup = '<div class="col-6">'
+                                + '<input type="checkbox" disabled class="mx-1 scrape_fields" id="id_scrape_fields.' + field + '" name="scrape_fields[]" value="' + field + '">'
+                                + '<label for="id_scrape_fields.' + field +'">' + field + '</label>'
+                                + '</div>';
+            }
+        } else {
+            var fieldsGroup = '<div class="col-6">'
+                            + '<input type="checkbox" class="mx-1 scrape_fields" id="id_scrape_fields.' + field + '" name="scrape_fields[]" value="' + field + '">'
+                            + '<label for="id_scrape_fields.' + field +'">' + field + '</label>'
+                            + '</div>';
+        }
         if (colCount % 2 == 0) { // 새로운 행을 시작
             row = $('<div class="row scrape_fields-group"></div>');
             $(row).insertBefore($('#scrape_fields-feedback'));
@@ -48,19 +65,39 @@ function fetchFields(fields) {
     });
 }
 
-function fetchParameters(parameters) {
+function fetchParameters(parameters, scrape_parameters) {
     $('.scrape_parameters-group').remove();
-    parameters.forEach(function(parameter) {
-        var parametersGroup = '<div class="input-group mb-1 scrape_parameters-group">'
-            + '<span class="input-group-text col-4">' + parameter + '</span>'
-            + '<input type="text" name="scrape_parameters[' + parameter + ']" '
-            + 'class="form-control col-8" id="id_scrape_parameters.' + parameter + '">'
-            + '</div>';
-        $(parametersGroup).insertBefore($('#scrape_parameters-feedback'));
-    });
+    if (scrape_parameters) {
+        parameters.forEach(function(parameter) {
+            if (parameter in scrape_parameters){
+                var parametersGroup = '<div class="input-group mb-1 scrape_parameters-group">'
+                    + '<span class="input-group-text col-4">' + parameter + '</span>'
+                    + '<input type="text" name="scrape_parameters[' + parameter + ']" '
+                    + 'value="'+ scrape_parameters[parameter] +'"'
+                    + 'class="form-control col-8" id="id_scrape_parameters.' + parameter + '" readonly>'
+                    + '</div>';
+            } else {
+                var parametersGroup = '<div class="input-group mb-1 scrape_parameters-group">'
+                    + '<span class="input-group-text col-4">' + parameter + '</span>'
+                    + '<input type="text" name="scrape_parameters[' + parameter + ']" '
+                    + 'class="form-control col-8" id="id_scrape_parameters.' + parameter + '" readonly>'
+                    + '</div>';
+            }
+            $(parametersGroup).insertBefore($('#scrape_parameters-feedback'));
+        });
+    } else {
+        parameters.forEach(function(parameter) {
+            var parametersGroup = '<div class="input-group mb-1 scrape_parameters-group">'
+                + '<span class="input-group-text col-4">' + parameter + '</span>'
+                + '<input type="text" name="scrape_parameters[' + parameter + ']" '
+                + 'class="form-control col-8" id="id_scrape_parameters.' + parameter + '">'
+                + '</div>';
+            $(parametersGroup).insertBefore($('#scrape_parameters-feedback'));
+        });
+    }
 }
 
-function fetchUserDefinedScript(select_id) {
+function initUserDefinedScript(){
     $('#id_script').remove();
     var user_defined_script_select = '<div class="row mb-3 mx-2" id="id_script">'
             + '<div class="col-4">'
@@ -80,6 +117,10 @@ function fetchUserDefinedScript(select_id) {
         fetchFields(fields);
         fetchParameters(parameters);
     });
+}
+
+function fetchUserDefinedScript(select_id, scrape_fields, scrape_parameters) {
+    initUserDefinedScript();
     $.ajax({
         url: scriptApi + 'simple',
         type: 'GET',
@@ -94,11 +135,12 @@ function fetchUserDefinedScript(select_id) {
                 select.append(option);
                 option.attr('selected', true);
             }
-            var set_selected = false;
             $.each(script_list, function (index, script) {
                 var option = $('<option>').val(script.id).text(script.name);
                 if (select_id == script.id) {
                     option.attr('selected', true);
+                    fetchFields(script.fields, scrape_fields);
+                    fetchParameters(script.parameters, scrape_parameters);
                 }
                 option.attr('data-fields', JSON.stringify(script.fields));
                 option.attr('data-parameters', JSON.stringify(script.parameters));
@@ -112,9 +154,10 @@ function fetchUserDefinedScript(select_id) {
 }
 
 $(document).ready(function () {
+    // 카테고리 수정
     $('#id_scrape_category').on('change', function () {
         var scrapeCategoryId = $(this).val();
-        if (scrapeCategoryId === 'user_defined_script') {
+        if (scrapeCategoryId === 'user_defined_script') { // 사용자 정의 스크립트 선택
             fetchUserDefinedScript();
             $('.scrape_fields-group').remove();
             $('.scrape_parameters-group').remove();
@@ -129,22 +172,7 @@ $(document).ready(function () {
     });
 });
 
-
-$('#createNewButton').on('click', function (e) {
-    e.preventDefault();
-    $('#formInModal').attr('action', mainApi);
-    $('#formInModal').attr('method', 'post');
-    $('#formInModal')[0].reset();
-    $('#createButton').text('Create')
-    $('#warningMessage').text('').addClass('d-none');
-    fetchAsset();
-    $('#id_script').remove();
-    recipientsArray = [];
-    $('#id_recipients_container').empty();
-});
-
 function getRecipients(inputText) {
-    // 여기서는 간단히 고정된 배열을 사용하며, 실제로는 Ajax 요청 등을 통해 추천 리스트를 가져올 수 있습니다.
     var suggestionRecipients = $('#suggestionRecipients');
     suggestionRecipients.empty();
     $.ajax({
@@ -172,6 +200,16 @@ function getRecipients(inputText) {
     });
 }
 
+function setRecipient(id, username) {
+        var inputGroup = '<div class="input-group recipients-input-group form-control">'
+                + '<input type="hidden" name="recipients[]" value="' + id + '">'
+                + '<span class="input-group-text col-10">' + username + '</span>'
+                + '<button class="btn btn-outline-secondary col-2 recipients-button-remove" type="button">-</button>'
+                + '</div>';
+        $('#id_recipients_container').append(inputGroup);
+
+}
+
 $(document).ready(function() {
     $('#id_recipients').on('input', function() {
         var inputText = $(this).val();
@@ -190,13 +228,7 @@ $(document).ready(function() {
         var selectedRecipient = $(this).parent();
         selectedRecipient.empty();
         selectedRecipient.css('display', 'none');
-
-        var inputGroup = '<div class="input-group recipients-input-group form-control">'
-                + '<input type="hidden" name="recipients[]" value="' + id + '">'
-                + '<span class="input-group-text col-10">' + username + '</span>'
-                + '<button class="btn btn-outline-secondary col-2 recipients-button-remove" type="button">-</button>'
-                + '</div>';
-        $('#id_recipients_container').append(inputGroup);
+        setRecipient(id, username);
         $('input[name="tmp-recipients[]"]').val('');
     });
     $(document).on('click', '.recipients-button-remove', function () {
@@ -204,8 +236,6 @@ $(document).ready(function() {
         recipientsArray = recipientsArray.filter(function(element) {
             return element != id;
         });
-        console.log(recipientsArray);
-        console.log(id);
         $(this).parent().remove();
     });
 });
@@ -223,15 +253,14 @@ $(function () {
                     focus: true
                 });
                 modal.show();
+                $('#formInModal')[0].reset();
                 $('#createButton').text('Update');
                 $('#warningMessage').text('').addClass('d-none');
 
-                // Set the form action URL to the asset update view
                 var form = document.getElementById('formInModal');
                 form.action = mainApi + monitorId + '/';
                 form.method = 'patch'
 
-                // Set the form fields to the appropriate values
                 var nameField = $('#id_name');
                 var intervalField = $('#id_interval');
                 var reportTimeField = $('#id_report_time');
@@ -239,9 +268,45 @@ $(function () {
 
                 
                 nameField.val(response['name']);
+                nameField.attr('disabled', true);
                 intervalField.val(response['interval']);
                 reportTimeField.val(response['report_time']);
                 noteField.val(response['note']);
+                response['report_list'].forEach(function(report) {
+                    $('#id_report_list\\.' + report).prop('checked', true);
+                });
+                recipientsArray = [];
+                $('#id_recipients_container').empty();
+                $.each(response['recipients'], function(index, id) {
+                    setRecipient(id, response['recipients_username'][index])
+                    recipientsArray.push(id);
+                });
+                fetchAsset(response['asset']);
+                $('#id_scrape_category').val(response['scrape_category']);
+                $('#id_scrape_category').attr('disabled', true);
+                if (response['scrape_category'] == 'user_defined_script') {
+                    // 추후 필드 및 파라미터 수정 지원을 위해 fetchUserDefinedScript를 사용하여 user_deinfed_script 전체값을 가져온다.
+                    fetchUserDefinedScript(response['user_defined_script'], response['scrape_fields'], response['scrape_parameters']);
+                    $('#id_user_defined_script').attr('disabled', true);
+                } else {
+                    $('#id_script').remove();
+                    var selectedScrape = $("#id_scrape_category option:selected");
+                    fetchFields(selectedScrape.data('fields'))
+                    fetchParameters(selectedScrape.data('parameters'))
+                }
+                $('.scrape_fields').each(function(){
+                    if (response['scrape_fields'].includes($(this).val())){
+                        $(this).prop('checked', true);
+                    }
+                    $(this).attr('disabled', true);
+                });
+            // var selectedOption = $(this).find('option:selected');
+            // var fields = selectedOption.data('fields');
+            // var parameters = selectedOption.data('parameters');
+            // fetchFields(fields);
+            // fetchParameters(parameters);
+        // }
+                
 
             },
             error: function (xhr, status, error) {
@@ -249,4 +314,23 @@ $(function () {
             }
         });
     });
+});
+
+$('#createNewButton').on('click', function (e) {
+    e.preventDefault();
+    $('#formInModal').attr('action', mainApi);
+    $('#formInModal').attr('method', 'post');
+    $('#formInModal')[0].reset();
+    $('#createButton').text('Create')
+    $('#warningMessage').text('').addClass('d-none');
+    $('#id_script').remove();
+    recipientsArray = [];
+    $('#id_recipients_container').empty();
+    $('#id_name').removeAttr('disabled');
+    $('#id_asset').removeAttr('disabled');
+    $('#id_scrape_category').removeAttr('disabled');
+    $('#id_scrape_fields').removeAttr('disabled');
+    fetchAsset();
+    $('.scrape_fields-group').remove();
+    $('.scrape_parameters-group').remove();
 });

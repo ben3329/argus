@@ -96,8 +96,8 @@
                                         <input type="hidden" name="tmp-report_list[]" id="hiddenFields">
                                         <div class="scrollable-container" style="max-height: 64px; overflow: auto;">
                                             {% for report in report_list %}
-                                                <input type="checkbox" class="mx-1" id="id_report_list.{{ report.0 }}" name="report_list[]" value="{{ report.0 }}">
-                                                <label for="report_list.{{ report.0 }}">{{report.1}}</label><br>
+                                                <input type="checkbox" class="mx-1 report_list" id="id_report_list.{{ report.0 }}" name="report_list[]" value="{{ report.0 }}">
+                                                <label for="id_report_list.{{ report.0 }}">{{report.1}}</label><br>
                                             {% endfor %}
                                         </div>
                                         <div class="text-danger invalid-feedback"></div>

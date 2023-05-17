@@ -94,9 +94,10 @@ class MonitorViewSetSerializer(serializers.ModelSerializer):
         queryset=UserDefinedScript.objects.all(),
         allow_null=True, required=False)
     user_defined_script_name = serializers.ReadOnlyField(source='user_defined_script.name')
+    scrape_status = serializers.SerializerMethodField()
+    recipients_username = serializers.SerializerMethodField()
     author = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     author_name = serializers.ReadOnlyField(source='author.username')
-    scrape_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Monitor
@@ -104,13 +105,20 @@ class MonitorViewSetSerializer(serializers.ModelSerializer):
                   'scrape_category', 'scrape_fields', 'scrape_parameters',
                   'user_defined_script', 'user_defined_script_name',
                   'scrape_status',
-                  'interval', 'report_time', 'report_list', 'recipients',
+                  'interval', 'report_time', 'report_list',
+                  'recipients', 'recipients_username',
                   'author', 'author_name', 'create_date']
         read_only_fields = ['asset_name', 'user_defined_script_name',
-                            'scrape_status', 'author_name', 'create_date']
+                            'scrape_status', 'recipients_username',
+                            'author_name', 'create_date']
+
     def get_scrape_status(self, obj):
         scrape = Scrape.objects.filter(name=obj.name).first()
         return scrape.status if scrape else None
+
+    def get_recipients_username(self, obj):
+        recipients = obj.recipients.all()
+        return [recipient.username for recipient in recipients]
 
 
 # For scrape client
@@ -131,7 +139,7 @@ class AssetToScrapeSerializer(serializers.ModelSerializer):
 class UserDefinedScriptToScrapeSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserDefinedScript
-        fields = ['name', 'language', 'code', 'output_type', 'fields', 'parameters']
+        fields = ['name', 'language', 'code', 'output_type', 'fields', 'parameters', 'revision']
 
 
 class MonitorToScrapeSerializer(serializers.ModelSerializer):

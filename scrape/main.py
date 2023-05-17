@@ -14,6 +14,7 @@ from typing import Dict
 from datetime import datetime
 import pytz
 import traceback
+import pydantic
 
 async def print_1():
     await asyncio.sleep(1)
@@ -40,6 +41,7 @@ class Main(object):
     async def read_message(self) -> None:
         while True:
             _, message = await self.redis_client.brpop(self.redis_queue_name)
+            message_data = {}
             try:
                 message_data = json.loads(message.decode())
                 if message_data['cmd'] == 'create':
@@ -69,7 +71,7 @@ class Main(object):
                     await self.stop_scrape(message_data['name'])
                 elif message_data['cmd'] == 'delete':
                     await self.stop_scrape(message_data['name'])
-                    await Scrape.all().delete()
+                    await Scrape.filter(name=message_data['name']).update(status='Deleted')
                 elif message_data['cmd'] == 'list':
                     jobs = self.scheduler.get_jobs()
                     jobs_str = f'jobs: {jobs}'
@@ -94,6 +96,14 @@ class Main(object):
                 else:
                     raise ValueError(
                         f"Unknown command. cmd: {message_data['cmd']}")
+            except pydantic.ValidationError as e:
+                try:
+                    name = message_data['serialized_data']['name']
+                    await self.stop_scrape(name)
+                except:
+                    pass
+                logger.warning(
+                    f"{type(e).__name__}. message: {message}, error_message: {e}")
             except Exception as e:
                 logger.error(traceback.format_exc())
                 logger.warning(

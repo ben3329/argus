@@ -1,5 +1,4 @@
-from django.db.models.signals import post_save
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
 from monitoring.models import *
@@ -23,3 +22,8 @@ def create_scrape(sender, instance, **kwargs):
     
     scrape_client = ScrapeClient()
     scrape_client.create(instance_list=instance_list)
+
+@receiver(pre_delete, sender=Monitor)
+def stop_scrape(sender, instance, **kwargs):
+    scrape_client = ScrapeClient()
+    scrape_client.delete(monitor_name=instance.name)
