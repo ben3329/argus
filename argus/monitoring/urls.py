@@ -9,6 +9,7 @@ router = DefaultRouter()
 router.register(r'assets', views.AssetViewSet)
 router.register(r'access_credentials', views.AccessCredentialViewSet)
 router.register(r'scripts', views.ScriptViewSet, basename='script')
+router.register(r'monitors', views.MonitorViewSet)
 
 urlpatterns = [
     # path('', include(router.urls)),

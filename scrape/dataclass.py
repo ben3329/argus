@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator, EmailStr
+from pydantic import BaseModel, validator, EmailStr, constr
 import type_alias
 from typing import Optional, List, Dict, Union, Literal
 from collections import OrderedDict
@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 import pandas as pd
 from croniter import croniter
+from built_in_scripts import *
 
 
 class AccessCredentialModel(BaseModel):
@@ -17,17 +18,14 @@ class AccessCredentialModel(BaseModel):
 
 
 class UserDefinedScriptModel(BaseModel):
-    name: str
+    name: constr(min_length=1)
     language: Literal['python2', 'python3', 'bash']
     code: str
     output_type: type_alias.OUTPUT_TYPE
+    fields: List[str]
+    parameters: List[str]
     revision: int
 
-
-class BuiltInScriptModel(BaseModel):
-    category: Literal['linux_system_memory']
-    fields: List[type_alias.LINUX_SYSTEM_MEMORY_FIELDS]
-    parameter: Optional[Dict[str, str]] = None
 
 
 class AssetModel(BaseModel):
@@ -38,9 +36,12 @@ class AssetModel(BaseModel):
 
 
 class ScrapeModel(BaseModel):
-    name: str
+    name: constr(min_length=1)
     asset: AssetModel
-    script: Union[BuiltInScriptModel, UserDefinedScriptModel]
+    scrape_category: type_alias.SCRAPE_CATEGORY
+    scrape_fields: Optional[List[str]] = None
+    scrape_parameters: Optional[Dict[str, str]] = None
+    user_defined_script: Optional[UserDefinedScriptModel] = None
     interval: int
     report_list: List[type_alias.REPORT_TYPE]
     report_time: Optional[str] = None
@@ -49,10 +50,39 @@ class ScrapeModel(BaseModel):
     @validator('report_time')
     def validate_report_time(cls, v):
         try:
-            croniter(v)
+            if v:
+                croniter(v)
             return v
         except:
             raise ValueError('Invalid report time format')
+
+    @validator('scrape_fields')
+    def validate_scrape_fields(cls, v, values, **kwargs):
+        if 'scrape_category' in values:
+            valid_fields = {
+                'linux_system_memory': linux_system_memory.LinuxSystemMemory._fields
+            }
+            if values.get('user_defined_script'):
+                valid_fields['user_defined_script'] = values['user_defined_script']['fields']
+            category = values['scrape_category']
+            if category in valid_fields:
+                if v is not None and any(field not in valid_fields[category] for field in v):
+                    raise ValueError(f'Invalid fields for category {category}')
+        return v
+
+    @validator('scrape_parameters')
+    def validate_scrape_parameters(cls, v, values, **kwargs):
+        if 'scrape_parameters' in values:
+            valid_parameters = {
+                'linux_system_memory': linux_system_memory.LinuxSystemMemory._parameters
+            }
+            if values.get('user_defined_script'):
+                valid_parameters['user_defined_script'] = values['user_defined_script']['parameters']
+            category = values['scrape_category']
+            if category in valid_parameters:
+                if v is not None and any(key not in valid_parameters[category] for key in v):
+                    raise ValueError(f'Invalid parameters for category {category}')
+        return v
 
     @property
     def report_time_as_dict(self) -> OrderedDict:

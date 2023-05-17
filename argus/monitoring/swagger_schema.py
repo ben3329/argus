@@ -1,5 +1,6 @@
 from drf_yasg import openapi
-from .models import *
+from monitoring.models import *
+from monitoring.choices import *
 from typing import Dict, List
 
 
@@ -121,7 +122,7 @@ access_credential_simple_api_response_properties = filter_properties(
 
 access_credential_simple_api_response = {
     200: openapi.Response(
-        description="Simple list of Access Credentail. The parameter 'page' is not used",
+        description="Simple list of Access Credentail.",
         schema=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties=access_credential_simple_api_response_properties
@@ -213,6 +214,20 @@ asset_update_api_response = {
     )
 }
 
+asset_simple_api_response_properties = filter_properties(
+    ['id', 'name'],
+    asset_properties)
+
+asset_simple_api_response = {
+    200: openapi.Response(
+        description="Simple list of Asset.",
+        schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties=asset_simple_api_response_properties
+        ),
+    )
+}
+
 
 script_properties = {
     'id': openapi.Schema(
@@ -291,5 +306,19 @@ script_create_api_response = {
             type=openapi.TYPE_OBJECT,
             properties=script_create_api_properties
         )
+    )
+}
+
+script_simple_api_response_properties = filter_properties(
+    ['id', 'name', 'fields', 'parameters'],
+    script_properties)
+
+script_simple_api_response = {
+    200: openapi.Response(
+        description="Simple list of Script.",
+        schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties=script_simple_api_response_properties
+        ),
     )
 }

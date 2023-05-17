@@ -1,6 +1,6 @@
 from django import template
 from django.utils.safestring import mark_safe
-from monitoring.models import AccessTypeChoices, AssetTypeChoices
+from monitoring.choices import *
 
 register = template.Library()
 

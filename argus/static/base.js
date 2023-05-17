@@ -26,14 +26,50 @@ $(document).ready(function () {
     $('#formInModal').submit(function (event) {
         event.preventDefault();
         var form = $(this);
+        var data = form.serializeArray();
+        var key_subkey_pattern = /^(.+)\[(.+)\]$/i;
+
+        var processedData = {};
+        $.each(data, function () {
+            var key = this.name;
+            var type = "string";
+            var match = null;
+            var subkey = null;
+            if (key.endsWith("[]")){
+                key = key.substring(0, this.name.length - 2);
+                type = "array";
+            } else if (match = key.match(key_subkey_pattern)){
+                key = match[1];
+                subkey = match[2]; 
+                type = "dict";
+            }
+            if (key.startsWith("tmp-")){
+                processedData[key.replace("tmp-", "")] = []
+                return true;
+            }
+            if (!processedData[key]) {
+                if (type === "string"){
+                    processedData[key] = this.value;
+                } else if (type === "array") {
+                    processedData[key] = [this.value];
+                } else if (type === "dict") {
+                    processedData[key] = {[subkey]:this.value};
+                }
+            } else {
+                if (Array.isArray(processedData[key])) {
+                    processedData[key].push(this.value);
+                } else if (Object.prototype.toString.call(processedData[key]) === "[object Object]") {
+                    processedData[key][subkey] = this.value;
+                }
+            }
+        });
         $.ajax({
             url: form.attr('action'),
             type: form.attr('method'),
-            data: form.serialize(),
+            data: JSON.stringify(processedData),
+            contentType: 'application/json',
             beforeSend: function (xhr) {
-                if (this.type == 'PUT' || this.type  == 'PATCH') {
-                    xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
-                }
+                xhr.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
             },
             success: function (response) {
                 $('#createModal').modal('hide');

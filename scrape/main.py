@@ -8,18 +8,23 @@ import logging
 import redis.asyncio as redis
 import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.base import STATE_RUNNING
 import json
 from typing import Dict
 from datetime import datetime
 import pytz
+import traceback
+import pydantic
 
+async def print_1():
+    await asyncio.sleep(1)
+    print(1)
 
 class Main(object):
     def __init__(self, redis_queue_name: str = 'web_to_engine', init_tortoise: bool = True) -> None:
         self.redis_client = redis.from_url(f'redis://{REDIS_HOST}')
         self.scrape_mgr_pool: Dict[str, ScrapeManager] = dict()
         self.scheduler = AsyncIOScheduler(logger=logger)
-        self.scheduler.start()
         self.redis_queue_name = redis_queue_name
         self.init_tortoise = init_tortoise
 
@@ -36,6 +41,7 @@ class Main(object):
     async def read_message(self) -> None:
         while True:
             _, message = await self.redis_client.brpop(self.redis_queue_name)
+            message_data = {}
             try:
                 message_data = json.loads(message.decode())
                 if message_data['cmd'] == 'create':
@@ -45,8 +51,6 @@ class Main(object):
                         scrape, init_tortoise=self.init_tortoise)
                     scrape_job_id = scrape.name + '_scrape'
                     report_job_id = scrape.name + '_report'
-                    await self.wait_running_job_complete()
-                    self.scheduler.pause()
                     # create scrape job
                     if self.scheduler.get_job(scrape_job_id):
                         self.scheduler.remove_job(scrape_job_id)
@@ -60,13 +64,14 @@ class Main(object):
                         self.scheduler.add_job(
                             scrape_manager.report, 'cron', **scrape.report_time_as_dict,
                             id=report_job_id)
-                    self.scheduler.resume()
+                    if self.scheduler.state != STATE_RUNNING:
+                        self.scheduler.start()
                     self.scrape_mgr_pool[scrape.name] = scrape_manager
                 elif message_data['cmd'] == 'stop':
                     await self.stop_scrape(message_data['name'])
                 elif message_data['cmd'] == 'delete':
                     await self.stop_scrape(message_data['name'])
-                    await Scrape.all().delete()
+                    await Scrape.filter(name=message_data['name']).update(status='Deleted')
                 elif message_data['cmd'] == 'list':
                     jobs = self.scheduler.get_jobs()
                     jobs_str = f'jobs: {jobs}'
@@ -75,15 +80,32 @@ class Main(object):
                     logger.setLevel(logging.WARNING)
                     self.scheduler.print_jobs()
                 elif message_data['cmd'] == 'exit':
-                    await self.redis_client.close()
+                    await self.redis_client.close(True)
+                    logger.warning('connection close.')
                     await self.wait_running_job_complete()
                     self.scheduler.remove_all_jobs()
+                    await self.wait_running_job_complete()
                     del self.scrape_mgr_pool
                     break
+                elif message_data['cmd'] == 'test':
+                    if message_data['method'] == 'add_simple_job':
+                        self.scheduler.add_job(print_1, 'interval', seconds=1, id='test_job')
+                        self.scheduler.start()
+                    elif message_data['method'] == 'done_simple_job':
+                        self.scheduler.remove_job('test_job')
                 else:
                     raise ValueError(
                         f"Unknown command. cmd: {message_data['cmd']}")
+            except pydantic.ValidationError as e:
+                try:
+                    name = message_data['serialized_data']['name']
+                    await self.stop_scrape(name)
+                except:
+                    pass
+                logger.warning(
+                    f"{type(e).__name__}. message: {message}, error_message: {e}")
             except Exception as e:
+                logger.error(traceback.format_exc())
                 logger.warning(
                     f"{type(e).__name__}. message: {message}, error_message: {e}")
 
@@ -91,12 +113,10 @@ class Main(object):
         scrape_job_id = scrape_name + '_scrape'
         report_job_id = scrape_name + '_report'
         await self.wait_running_job_complete()
-        self.scheduler.pause()
         if self.scheduler.get_job(scrape_job_id):
             self.scheduler.remove_job(scrape_job_id)
         if self.scheduler.get_job(report_job_id):
             self.scheduler.remove_job(report_job_id)
-        self.scheduler.resume()
         if scrape_name in self.scrape_mgr_pool:
             del self.scrape_mgr_pool[scrape_name]
 

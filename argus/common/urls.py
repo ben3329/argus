@@ -1,6 +1,10 @@
-from django.urls import path
+from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from . import views
+from rest_framework.routers import DefaultRouter
+
+router = DefaultRouter()
+router.register(r'recipients', views.RecipientsViewSet, basename='recipients')
 
 app_name = 'common'
 
@@ -17,4 +21,5 @@ urlpatterns = [
              template_name='common/password_reset_confirm.html'),
          name='password_reset_confirm'),
     path('signup/', views.signup, name='signup'),
+    path('api/', include(router.urls)),
 ]

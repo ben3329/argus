@@ -2,7 +2,9 @@ import asyncssh
 from errors import ScriptError
 
 class LinuxSystemMemory(object):
-    def __init__(self, conn: asyncssh.SSHClientConnection):
+    _fields = ['used', 'utilization']
+    _parameters = []
+    def __init__(self, conn: asyncssh.SSHClientConnection, **kwargs):
         self.conn = conn
         self.data = {}
 
@@ -12,7 +14,7 @@ class LinuxSystemMemory(object):
 
     @property
     def utilization(self):
-        return self.data['used'] / self.data['total']
+        return round((self.data['used'] / self.data['total']) * 100, 2)
 
     async def get_data(self):
         if self.conn == None:

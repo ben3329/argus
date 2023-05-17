@@ -20,7 +20,7 @@ class Scrape(Model):
 
 class ScrapeData(Model):
     scrape = fields.ForeignKeyField(
-        'models.Scrape', on_delete=fields.CASCADE, reference='Scrape.name')
+        'models.Scrape', on_delete=fields.CASCADE, reference='Scrape')
     datetime = fields.DatetimeField(auto_now_add=True)
     data = fields.JSONField()
 
@@ -37,13 +37,17 @@ class DBClient:
             if init_tortoise:
                 await Tortoise.init(
                     db_url=f'mysql://root:{DB_PASSWORD}@{DB_HOST}/monitoring',
-                    modules={'models': ['__main__']}
+                    modules={'models': ['database']}
                 )
                 await Tortoise.generate_schemas()
         return cls._instance
 
     async def create_scrape(self, name: str) -> Scrape:
+        await Scrape.filter(name=name, status='Deleted').delete()
         scrape, created = await Scrape.get_or_create(name=name)
+        if created == False:
+            scrape.status = 'Normal'
+            await scrape.save()
         return scrape
 
     async def set_scrape_status(self, name: str, status: str):

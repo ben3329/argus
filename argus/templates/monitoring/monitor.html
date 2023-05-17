@@ -1,4 +1,260 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load monitoring_filter %}
 {% block content %}
-MOnitor!!!
+{% url 'monitoring:monitor-list' as main_api %}
+{% url 'monitoring:asset-list' as asset_api %}
+{% url 'monitoring:script-list' as script_api %}
+{% url 'common:recipients-list' as recipients_api %}
+<script>
+    var mainApi = "{{ main_api }}";
+    var assetApi = "{{ asset_api }}";
+    var scriptApi = "{{ script_api }}";
+    var recipientsApi = "{{ recipients_api }}";
+    var recipientsArray = [];
+</script>
+<div class="container">
+    <h3 class="border-bottom border-secondary">Monitor</h3>
+</div>
+<div class="container">
+    <div class="d-flex justify-content-end">
+        <button class="btn btn-dark"
+            {% if not create_perm %} disabled {% endif %} 
+            data-bs-toggle="modal" data-bs-target="#createModal" id="createNewButton">
+            Create
+        </button>
+        <button id="deleteButton" class="btn btn-dark ms-2">
+            Delete
+        </button>
+    </div>
+    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="createModalLabel">Create Monitor</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{{ main_api }}" id="formInModal">
+                    <div class="modal-body">
+                        <ul class="nav nav-tabs" id="myTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                              <a class="nav-link active" id="detail-tab" data-bs-toggle="tab" href="#detail" role="tab" aria-controls="detail" aria-selected="true">Detail</a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                              <a class="nav-link" id="scrape-tab" data-bs-toggle="tab" href="#scrape" role="tab" aria-controls="scrape" aria-selected="false">Scrape</a>
+                            </li>
+                        </ul>
+                        <div class="tab-content mt-3" id="monitorTabContent">
+                            <div class="tab-pane fade show active" id="detail" role="tabpanel" aria-labelledby="detail-tab">
+                                <div class="row mb-3 mx-2">
+                                    <div class="col-4">
+                                        <label for="id_name" class="form-label">Name</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <input type="text" name="name" maxlength="31" class="form-control" id="id_name">
+                                        <div class="text-danger invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 mx-2">
+                                    <div class="col-4">
+                                        <label for="id_asset" class="form-label">Asset</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <select name="asset" class="form-control" id="id_asset">
+                                            <option selected>------</option>
+                                        </select>
+                                        <div class="text-danger invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 mx-2">
+                                    <div class="col-4">
+                                        <label for="id_interval" class="form-label">Interval</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <div class="input-group mb-1">
+                                            <input type="number" name="interval" class="form-control" id="id_interval">
+                                            <span class="input-group-text">seconds</span>
+                                        </div>
+                                        <div class="text-danger invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 mx-2">
+                                    <div class="col-4">
+                                        <label for="id_report_time" class="form-label">Report Time</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <input type="text" name="report_time" maxlength="31" class="form-control" id="id_report_time"
+                                            placeholder="Contab Format">
+                                        <div class="text-danger invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 mx-2">
+                                    <div class="col-4">
+                                        <label for="id_report_list" class="form-label">Report List</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <input type="hidden" name="tmp-report_list[]" id="hiddenFields">
+                                        <div class="scrollable-container" style="max-height: 64px; overflow: auto;">
+                                            {% for report in report_list %}
+                                                <input type="checkbox" class="mx-1 report_list" id="id_report_list.{{ report.0 }}" name="report_list[]" value="{{ report.0 }}">
+                                                <label for="id_report_list.{{ report.0 }}">{{report.1}}</label><br>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="text-danger invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 mx-2">
+                                    <div class="col-4">
+                                        <label for="id_recipients" class="form-label">Recipients</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <input type="text" name="tmp-recipients[]" maxlength="31" class="form-control" id="id_recipients" data-toggle="dropdown" />
+                                        <div class="dropdown-menu" id="suggestionRecipients" aria-labelledby="id_recipients">
+                                        </div>
+                                        <div class="scrollable-container" style="max-height: 80px; overflow: auto;" id="id_recipients_container">
+                                        </div>
+                                        <div class="text-danger invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 mx-2">
+                                    <div class="col-4">
+                                        <label for="id_note" class="form-label">Note</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <textarea name="note" cols="40" rows="2" class="form-control" id="id_note"></textarea>
+                                        <div class="text-danger invalid-feedback"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="scrape" role="tabpanel" aria-labelledby="scrape-tab">
+                                <div class="row mb-3 mx-2">
+                                    <div class="col-4">
+                                        <label for="id_scrape_category" class="form-label">Category</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <select name="scrape_category" class="form-control" id="id_scrape_category">
+                                            <option selected>------</option>
+                                            {% for scrape in scrape_choices %}
+                                                <option value={{scrape.0}} data-fields='{{ scrape.2|safe }}' data-parameters='{{ scrape.3 }}'>{{ scrape.1 }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="text-danger invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 mx-2">
+                                    <div class="col-4">
+                                        <label for="id_scrape_fields" class="form-label">Fields</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <input type="hidden" name="tmp-scrape_fields[]" id="id_scrape_fields">
+                                        <div class="text-danger invalid-feedback" id="scrape_fields-feedback"></div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3 mx-2">
+                                    <div class="col-4">
+                                        <label for="id_scrape_parameters" class="form-label">Parameters</label>
+                                    </div>
+                                    <div class="col-8">
+                                        <div class="text-danger invalid-feedback" id="scrape_parameters-feedback"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger d-none" id="warningMessage"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-dark" id="createButton">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <table class="table border">
+        <thead>
+        <tr class="table-dark text-center">
+            <th style="width: 3%">
+                <input type="checkbox" id="check-all">
+            </th>
+            <th style="width: 7%">Author</th>
+            <th>Name</th>
+            <th>Asset</th>
+            <th>Scrape</th>
+            <th>Status</th>
+            <th>Report Time</th>
+            <th>Note</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% if data.results %}
+        {% for monitor in data.results %}
+        <tr class="text-center">
+            <td>
+                {% if user.is_superuser or user.username == monitor.author_detail.username %}
+                    <input type="checkbox" class="check-item" name="object-id" value="{{ monitor.id }}">
+                {% endif %}
+            </td>
+            <td>{{ monitor.author_name}}</td>
+            {% if user.is_superuser or user.username == monitor.author_detail.username %}
+                <td><a href="#" class="edit-monitor" data-monitor-id="{{monitor.id}}">{{ monitor.name }}</a></td>
+            {% else %}
+                <td>{{ monitor.name }}</td>
+            {% endif %}
+            <td>{{ monitor.asset_name}}</td>
+            {% if scrape_category == 'user_defined_script'%}
+                <td>{{ monitor.user_defined_script_name}}</td>
+            {% else %}
+                <td>{{ monitor.scrape_category }}</td>
+            {% endif %}
+            <td>{{ monitor.scrape_status }}</td>
+            <td>{{ monitor.report_time}}</td>
+            <td>{{ monitor.note }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="8" class="text-center">No Monitor</td>
+        </tr>
+        {% endif %}
+        </tbody>
+    </table>
+    <ul class="pagination justify-content-center">
+        {% if data.links.previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ current|add:-1 }}">Previous</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" ariadisabled="true" href="#">Previous</a>
+        </li>
+        {% endif %}
+        {% for i in ""|rjust:data.total_pages %}
+        {% if forloop.counter >= current|add:-5 and forloop.counter <= current|add:5 %}
+        {% if forloop.counter == current %}
+        <li class="page-item active" aria-current="page">
+            <a class="page-link" href="?page={{ forloop.counter }}">{{ forloop.counter }}</a>
+        </li>
+        {% else %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ forloop.counter }}">{{ forloop.counter }}</a>
+        </li>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+        {% if data.links.next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ current|add:1 }}">Next</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <a class="page-link" tabindex="-1" aria-disabled="true" href="#">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'monitor.js' %}"></script>
 {% endblock %}

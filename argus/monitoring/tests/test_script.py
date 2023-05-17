@@ -8,9 +8,8 @@ from monitoring.swagger_schema import *
 from monitoring.tests.common import CommonMethods
 
 import math
-from typing import Union
-from datetime import datetime
 import secrets
+import json
 
 
 class ScriptViewSetTests(APITestCase, CommonMethods):
@@ -100,6 +99,20 @@ class ScriptViewSetTests(APITestCase, CommonMethods):
             'name': 'test script',
             'language': LanguageChoices.shell.value,
             'code': 'ls',
+            'output_type': OutputTypeChoices.csv.value,
+            'note': ''
+        }
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_script_create_post_with_fields_and_params(self):
+        url = reverse('monitoring:script-list')
+        data = {
+            'name': 'test script',
+            'language': LanguageChoices.shell.value,
+            'code': 'ls',
+            'fields': json.dumps(['column1', 'colmun2']),
+            'parameters': json.dumps(['--param1', '--parma2']),
             'output_type': OutputTypeChoices.csv.value,
             'note': ''
         }

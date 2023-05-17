@@ -51,32 +51,6 @@
             </a>
         </li>
         <li class="nav-item" 
-            {% if view_name == 'monitoring:asset' %}
-                style="background-color: #5d7285"
-            {% endif %}
-        >
-            <a href="{% url 'monitoring:asset' %}"
-                class="nav-link {% if view_name == 'monitoring:asset' %} active {% else %} text-gray {% endif %}"
-                {% if view_name == 'monitoring:asset' %}
-                    aria-current="page" style="color: white"
-                {% endif %}>
-                Asset
-            </a>
-        </li>
-        <li class="nav-item" 
-            {% if view_name == 'monitoring:monitor' %}
-                style="background-color: #5d7285"
-            {% endif %}
-        >
-            <a href="{% url 'monitoring:monitor' %}"
-                class="nav-link {% if view_name == 'monitoring:monitor' %} active {% else %} text-gray {% endif %}"
-                {% if view_name == 'monitoring:monitor' %}
-                    aria-current="page" style="color: white"
-                {% endif %}>
-                Monitor
-            </a>
-        </li>
-        <li class="nav-item" 
             {% if view_name == 'monitoring:access_credential' %}
                 style="background-color: #5d7285"
             {% endif %}
@@ -90,6 +64,19 @@
             </a>
         </li>
         <li class="nav-item" 
+            {% if view_name == 'monitoring:asset' %}
+                style="background-color: #5d7285"
+            {% endif %}
+        >
+            <a href="{% url 'monitoring:asset' %}"
+                class="nav-link {% if view_name == 'monitoring:asset' %} active {% else %} text-gray {% endif %}"
+                {% if view_name == 'monitoring:asset' %}
+                    aria-current="page" style="color: white"
+                {% endif %}>
+                Asset
+            </a>
+        </li>
+        <li class="nav-item" 
             {% if view_name == 'monitoring:script' %}
                 style="background-color: #5d7285"
             {% endif %}
@@ -100,6 +87,19 @@
                     aria-current="page" style="color: white"
                 {% endif %}>
                 Script
+            </a>
+        </li>
+        <li class="nav-item" 
+            {% if view_name == 'monitoring:monitor' %}
+                style="background-color: #5d7285"
+            {% endif %}
+        >
+            <a href="{% url 'monitoring:monitor' %}"
+                class="nav-link {% if view_name == 'monitoring:monitor' %} active {% else %} text-gray {% endif %}"
+                {% if view_name == 'monitoring:monitor' %}
+                    aria-current="page" style="color: white"
+                {% endif %}>
+                Monitor
             </a>
         </li>
         {% if user.is_superuser %}
