@@ -15,7 +15,7 @@ import json
 class ScriptViewSetTests(APITestCase, CommonMethods):
     def create_script(self, author: User, cnt: int = 10) -> None:
         for i in range(cnt):
-            q = UserDefinedScript(author=author, name=secrets.token_hex(5), language=LanguageChoices.shell,
+            q = UserDefinedScript(author=author, name=secrets.token_hex(5), language=LanguageChoices.bash,
                        code='ls', output_type=OutputTypeChoices.none)
             q.save()
 
@@ -51,13 +51,13 @@ class ScriptViewSetTests(APITestCase, CommonMethods):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_script_list_get_order_by_update_date(self):
-        q = UserDefinedScript(author=self.super_user, name='0', language=LanguageChoices.shell,
+        q = UserDefinedScript(author=self.super_user, name='0', language=LanguageChoices.bash,
                    code='ls', output_type=OutputTypeChoices.none)
         q.save()
-        q = UserDefinedScript(author=self.super_user, name='2', language=LanguageChoices.shell,
+        q = UserDefinedScript(author=self.super_user, name='2', language=LanguageChoices.bash,
                    code='ls', output_type=OutputTypeChoices.none)
         q.save()
-        q = UserDefinedScript(author=self.super_user, name='1', language=LanguageChoices.shell,
+        q = UserDefinedScript(author=self.super_user, name='1', language=LanguageChoices.bash,
                    code='ls', output_type=OutputTypeChoices.none)
         q.save()
         obj = UserDefinedScript.objects.get(name='0')
@@ -97,7 +97,7 @@ class ScriptViewSetTests(APITestCase, CommonMethods):
         url = reverse('monitoring:script-list')
         data = {
             'name': 'test script',
-            'language': LanguageChoices.shell.value,
+            'language': LanguageChoices.bash.value,
             'code': 'ls',
             'output_type': OutputTypeChoices.csv.value,
             'note': ''
@@ -109,7 +109,7 @@ class ScriptViewSetTests(APITestCase, CommonMethods):
         url = reverse('monitoring:script-list')
         data = {
             'name': 'test script',
-            'language': LanguageChoices.shell.value,
+            'language': LanguageChoices.bash.value,
             'code': 'ls',
             'fields': json.dumps(['column1', 'colmun2']),
             'parameters': json.dumps(['--param1', '--parma2']),
@@ -123,7 +123,7 @@ class ScriptViewSetTests(APITestCase, CommonMethods):
         url = reverse('monitoring:script-list')
         data = {
             'name': 'test script',
-            'language': LanguageChoices.shell.value,
+            'language': LanguageChoices.bash.value,
             'code': 'ls',
             'output_type': OutputTypeChoices.csv.value,
             'note': ''
@@ -151,7 +151,7 @@ class ScriptViewSetTests(APITestCase, CommonMethods):
         url = reverse('monitoring:script-list')
         data = {
             'name': 'test script',
-            'language': LanguageChoices.shell.value,
+            'language': LanguageChoices.bash.value,
             'code': 'ls',
             'output_type': 'qwerqwer',
             'note': ''

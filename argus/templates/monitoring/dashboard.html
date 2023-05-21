@@ -1,4 +1,30 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load monitoring_filter %}
 {% block content %}
-Dashboard!!!!
+{% url 'monitoring:scrapedata-list' as main_api %}
+<script>
+    var mainApi = "{{ main_api }}";
+    var monitor_list = {{ monitor_list|safe }};
+    var maxChart = 6;
+    var currentChartIndex = 0;
+</script>
+<div class="container" id="id_all">
+    <div class="row">
+        <div class="col"><canvas id="canvas_0"></canvas></div>
+        <div class="col"><canvas id="canvas_1"></canvas></div>
+    </div>
+    <div class="row">
+        <div class="col"><canvas id="canvas_2"></canvas></div>
+        <div class="col"><canvas id="canvas_3"></canvas></div>
+    </div>
+    <div class="row">
+        <div class="col"><canvas id="canvas_4"></canvas></div>
+        <div class="col"><canvas id="canvas_5"></canvas></div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'npm/node_modules/chart.js/dist/chart.umd.js' %}"></script>
+<script src="{% static 'dashboard.js' %}"></script>
 {% endblock %}
