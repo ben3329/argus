@@ -130,6 +130,7 @@ dmypy.json
 
 database-data/
 argus/monitoring/migrations/
+logs/
 
 *.rdb
 *.DS_Store

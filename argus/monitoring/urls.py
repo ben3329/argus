@@ -10,6 +10,7 @@ router.register(r'assets', views.AssetViewSet)
 router.register(r'access_credentials', views.AccessCredentialViewSet)
 router.register(r'scripts', views.ScriptViewSet, basename='script')
 router.register(r'monitors', views.MonitorViewSet)
+router.register(r'scrape_data', views.ScrapeDataListAPIView)
 
 urlpatterns = [
     # path('', include(router.urls)),

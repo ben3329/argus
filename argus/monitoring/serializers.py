@@ -24,6 +24,11 @@ class UserDefinedScriptSerializerSimple(serializers.ModelSerializer):
         model = UserDefinedScript
         fields = ['id', 'name', 'fields', 'parameters']
 
+class MonitorSerializerSimple(serializers.ModelSerializer):
+    class Meta:
+        model = Monitor
+        fields = ['name', 'scrape_fields']
+
 
 class AssetViewSetSerializer(serializers.ModelSerializer):
     author = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
@@ -120,6 +125,10 @@ class MonitorViewSetSerializer(serializers.ModelSerializer):
         recipients = obj.recipients.all()
         return [recipient.username for recipient in recipients]
 
+class ScrapeDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScrapeData
+        fields = ['datetime', 'data']
 
 # For scrape client
 class AccessCredentialToScrapeSerializer(serializers.ModelSerializer):

@@ -10,6 +10,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django_filters.rest_framework import DjangoFilterBackend, DateTimeFilter, FilterSet
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -48,15 +49,16 @@ class AssetViewSet(mixins.CreateModelMixin,
                    GenericViewSet):
     queryset = Asset.objects.all()
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['author', 'name', 'ip', 'port', 'asset_type', 'access_credential','create_date']
+    ordering_fields = ['author', 'name', 'ip', 'port',
+                       'asset_type', 'access_credential', 'create_date']
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
     permission_classes = [IsAuthenticated, IsAuthor, HasAddPermissionWithPost]
-    
+
     def get_serializer_class(self):
         match self.action:
             case 'list_simple':
-                return AssetSerializerSimple 
+                return AssetSerializerSimple
             case _:
                 return AssetViewSetSerializer
 
@@ -83,7 +85,6 @@ class AssetViewSet(mixins.CreateModelMixin,
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -174,7 +175,8 @@ class ScriptViewSet(mixins.ListModelMixin,
                     GenericViewSet):
     queryset = UserDefinedScript.objects.all()
     filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['author', 'name', 'language', 'output_type', 'create_date', 'update_date']
+    ordering_fields = ['author', 'name', 'language',
+                       'output_type', 'create_date', 'update_date']
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
     permission_classes = [IsAuthenticated, IsAuthor, HasAddPermissionWithPost]
@@ -191,7 +193,7 @@ class ScriptViewSet(mixins.ListModelMixin,
         responses=script_list_api_response)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-    
+
     @swagger_auto_schema(responses=script_retrieve_api_response)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
@@ -235,7 +237,7 @@ class ScriptViewSet(mixins.ListModelMixin,
     )
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
-    
+
     @swagger_auto_schema(responses=script_simple_api_response)
     @action(detail=False, methods=['get'], url_path='simple')
     def list_simple(self, request: Request) -> Response:
@@ -244,6 +246,7 @@ class ScriptViewSet(mixins.ListModelMixin,
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+
 class MonitorViewSet(mixins.ListModelMixin,
                      mixins.CreateModelMixin,
                      mixins.RetrieveModelMixin,
@@ -251,19 +254,25 @@ class MonitorViewSet(mixins.ListModelMixin,
                      BulkDeleteMixin,
                      GenericViewSet):
     queryset = Monitor.objects.all()
-    serializer_class = MonitorViewSetSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['name', 'author', 'create_date']
     pagination_class = Pagination
     renderer_classes = [JSONRenderer]
     permission_classes = [IsAuthenticated, IsAuthor, HasAddPermissionWithPost]
 
+    def get_serializer_class(self):
+        match self.action:
+            case 'list_simple':
+                return MonitorSerializerSimple
+            case _:
+                return MonitorViewSetSerializer
+
     @swagger_auto_schema(
         manual_parameters=[page_param, ordering_param],
         responses=script_list_api_response)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-    
+
     @swagger_auto_schema(responses=script_retrieve_api_response)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
@@ -286,6 +295,30 @@ class MonitorViewSet(mixins.ListModelMixin,
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    @swagger_auto_schema(responses=script_simple_api_response)
+    @action(detail=False, methods=['get'], url_path='simple')
+    def list_simple(self, request: Request) -> Response:
+        # pagination 없이 목록 전부 일부 필드만 가져옴
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class ScrapeDataFilter(FilterSet):
+    datetime_after = DateTimeFilter(field_name='datetime', lookup_expr='gte')
+    datetime_before = DateTimeFilter(field_name='datetime', lookup_expr='lte')
+
+    class Meta:
+        model = ScrapeData
+        fields = ['scrape', 'datetime_after', 'datetime_before']
+
+
+class ScrapeDataListAPIView(GenericViewSet, mixins.ListModelMixin):
+    serializer_class = ScrapeDataSerializer
+    queryset = ScrapeData.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ScrapeDataFilter
+
 
 def authorize_api(request: HttpRequest) -> requests.Session:
     user = request.user
@@ -297,7 +330,13 @@ def authorize_api(request: HttpRequest) -> requests.Session:
 
 @login_required
 def dashboard(request):
-    context = {'user': request.user}
+    api_url = 'http://localhost:8080' + \
+        reverse('monitoring:monitor-list-simple')
+    session = authorize_api(request)
+    response = session.get(api_url)
+
+    data = response.json()
+    context = {'user': request.user, 'monitor_list': data}
     return render(request, 'monitoring/dashboard.html', context)
 
 
@@ -316,12 +355,6 @@ def asset(request: HttpRequest) -> HttpResponse:
         return render(request, 'monitoring/asset.html', context)
     else:
         return HttpResponseBadRequest(data['detail'])
-
-
-@login_required
-def monitor(request):
-    context = {'user': request.user}
-    return render(request, 'monitoring/monitor.html', context)
 
 
 @login_required
@@ -358,6 +391,7 @@ def script(request):
     else:
         return HttpResponseBadRequest(data['detail'])
 
+
 def get_scrape_choices() -> list:
     result = []
     for category in ScrapeCategoryChoices.choices:
@@ -370,7 +404,7 @@ def get_scrape_choices() -> list:
                 parameters = '[]'
         result.append(list(category) + [fields, parameters])
     return result
-        
+
 
 @login_required
 def monitor(request):
@@ -388,6 +422,7 @@ def monitor(request):
         return render(request, 'monitoring/monitor.html', context)
     else:
         return HttpResponseBadRequest(data['detail'])
+
 
 @login_required
 def config(request):

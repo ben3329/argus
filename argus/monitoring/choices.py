@@ -20,7 +20,7 @@ class AssetTypeChoices(models.TextChoices):
 class LanguageChoices(models.TextChoices):
     python3 = 'python3'
     python2 = 'python2'
-    shell = 'shell'
+    bash = 'bash'
 
 
 class OutputTypeChoices(models.TextChoices):
