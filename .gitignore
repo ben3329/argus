@@ -131,6 +131,7 @@ dmypy.json
 database-data/
 argus/monitoring/migrations/
 logs/
+argus/static/npm/
 
 *.rdb
 *.DS_Store
