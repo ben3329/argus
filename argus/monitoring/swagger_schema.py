@@ -228,6 +228,19 @@ asset_simple_api_response = {
     )
 }
 
+asset_test_api_required_properties = [
+    'ip', 'port', 'access_credential'
+]
+
+asset_test_api_properties = filter_properties(
+    asset_test_api_required_properties,
+    asset_properties)
+
+asset_test_api_response = {
+    200: 'OK',
+    400: 'Fail'
+}
+
 
 script_properties = {
     'id': openapi.Schema(

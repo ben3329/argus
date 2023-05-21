@@ -46,6 +46,7 @@ services:
     command: celery -A argus worker --loglevel=debug --logfile=/var/log/argus/celery.worker.log
     environment:
       REDIS_HOST: redis
+      DB_PASSWORD: admin_password
     volumes:
       - ./argus:/app
       - ./logs:/var/log/argus

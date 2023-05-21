@@ -75,9 +75,12 @@
                                 <label for="id_access_credential" class="form-label">Access Credential</label>
                             </div>
                             <div class="col-9">
-                                <select name="access_credential" class="form-control" id="id_access_credential">
-                                    <option value="" selected>---------</option>
-                                </select>
+                                <div class="input-group mb-1">
+                                    <select name="access_credential" class="form-control col-9" id="id_access_credential">
+                                        <option value="" selected>---------</option>
+                                    </select>
+                                    <button class="btn btn-outline-secondary col-3 test-button-addon" type="button">Test</button>
+                                </div>
                                 <div class="text-danger invalid-feedback"></div>
                             </div>
                         </div>
