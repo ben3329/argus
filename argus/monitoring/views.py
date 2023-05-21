@@ -20,6 +20,7 @@ from monitoring.swagger_schema import *
 from monitoring.permissions import *
 from monitoring.mixins import *
 from monitoring.choices import *
+from monitoring.tasks import *
 
 import requests
 import logging
@@ -115,6 +116,23 @@ class AssetViewSet(mixins.CreateModelMixin,
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+    
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=asset_test_api_required_properties,
+            properties=asset_test_api_properties,
+        ),
+        responses=asset_test_api_response
+    )
+    @action(detail=False, methods=['post'], url_path='test')
+    def test(self, request: Request) -> Response:
+        data = request.data
+        result = access_test.delay(data['ip'], data['port'], data['access_credential']).get(timeout=5)
+        if result[0] == True:
+            return Response('OK',status=status.HTTP_200_OK)
+        else:
+            return Response({'error_msg':result[1]}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AccessCredentialViewSet(mixins.CreateModelMixin,
