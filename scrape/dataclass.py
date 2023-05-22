@@ -117,7 +117,10 @@ class ScrapeDTO:
     @property
     def graph_image_24h(self) -> bytes:
         data = self.last_24h_data.set_index('datetime')
-        fig, axes = plt.subplots(nrows=len(data.columns), ncols=1, sharex=True)
+        columns_cnt = len(data.columns)
+        fig, axes = plt.subplots(nrows=columns_cnt, ncols=1, sharex=True)
+        if columns_cnt <= 1:
+            axes = [axes]
         for i, col in enumerate(data.columns):
             data[col].plot(ax=axes[i], title=col)
             axes[i].set_xlabel('')

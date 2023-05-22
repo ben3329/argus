@@ -46,10 +46,28 @@ class TestReporter(TestCase):
         self.assertIsInstance(result, str)
         self.assertIn('<img src="data:image/png;base64', result)
 
+    async def test_create_image_message_single_column(self):
+        scrape_name = 'test_single'
+        scrape = await self.dbclient.create_scrape(scrape_name)
+        for i in range(30):
+            data = {'col1': 1 + i}
+            datetime_field = datetime.utcnow() - timedelta(hours=32-i)
+            await self.dbclient.insert_data(
+                scrape, data, datetime=datetime_field)
+
+        df_first = await self.dbclient.get_first_data(scrape)
+        df_24h = await self.dbclient.get_24h_data(scrape)
+
+        self.data = ScrapeDTO(scrape_name, df_first, df_24h)
+        result = self.reporter.create_image_message(self.data, 'graph24')
+        self.assertIsInstance(result, str)
+        self.assertIn('<img src="data:image/png;base64', result)
+
     async def test_create_change_massage(self):
         result = self.reporter.create_change_message(self.data, 'diff')
         self.assertIsInstance(result, str)
         self.assertIn('diff', result)
+
     # If you want to test send email remove comments.
     # async def test_send_email(self):
     #     await self.reporter.send_email(

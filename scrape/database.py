@@ -71,17 +71,23 @@ class DBClient:
         now = datetime.utcnow()
         past_24h = now - timedelta(hours=24)
         data_list = await ScrapeData.filter(scrape=scrape).filter(datetime__gte=past_24h, datetime__lte=now).all()
-        rows = []
-        for data in data_list:
-            row = OrderedDict(
-                [('datetime', data.datetime.astimezone(pytz.timezone(TZ)))])
-            row.update(data.data)
-            rows.append(row)
-        return pd.DataFrame(rows)
+        if data_list:
+            rows = []
+            for data in data_list:
+                row = OrderedDict(
+                    [('datetime', data.datetime.astimezone(pytz.timezone(TZ)))])
+                row.update(data.data)
+                rows.append(row)
+            return pd.DataFrame(rows)
+        else:
+            return None
 
     async def get_first_data(self, scrape: Scrape) -> pd.DataFrame:
         data = await ScrapeData.filter(scrape=scrape).all().order_by('datetime').first()
-        row = OrderedDict(
-            [('datetime', data.datetime.astimezone(pytz.timezone(TZ)))])
-        row.update(data.data)
-        return pd.DataFrame([row])
+        if data:
+            row = OrderedDict(
+                [('datetime', data.datetime.astimezone(pytz.timezone(TZ)))])
+            row.update(data.data)
+            return pd.DataFrame([row])
+        else:
+            return None
