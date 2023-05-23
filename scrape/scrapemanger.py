@@ -114,6 +114,12 @@ class ScrapeManager(object):
                                               username=self.access_credential.username,
                                               password=self.access_credential.password,
                                               known_hosts=None, connect_timeout=3)
+            case 'ssh_private_key':
+                pkey = asyncssh.import_private_key(self.access_credential.secret)
+                conn = await asyncssh.connect(host=self.asset.ip, port=self.asset.port,
+                                              username=self.access_credential.username,
+                                              client_keys=[pkey],
+                                              known_hosts=None, connect_timeout=3)
             case access_type:
                 raise ValueError(
                     f"Invalid access_type. access_type:{access_type}")
@@ -148,6 +154,12 @@ class ScrapeManager(object):
                 conn = await asyncssh.connect(host=self.asset.ip, port=self.asset.port,
                                               username=self.access_credential.username,
                                               password=self.access_credential.password,
+                                              known_hosts=None, connect_timeout=3)
+            case 'ssh_private_key':
+                pkey = asyncssh.import_private_key(self.access_credential.secret)
+                conn = await asyncssh.connect(host=self.asset.ip, port=self.asset.port,
+                                              username=self.access_credential.username,
+                                              client_keys=[pkey],
                                               known_hosts=None, connect_timeout=3)
             case access_type:
                 raise ValueError(

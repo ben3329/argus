@@ -27,7 +27,7 @@ class MonitorViewSetTests(APITestCase, CommonMethods):
         self.cred = AccessCredential(
             author=self.super_user, name=f'{self.super_user.username}-id-password',
             access_type=AccessTypeChoices.ssh_password,
-            username='root', password='sniper!#@$')
+            username='root', password='password')
         self.cred.save()
         self.asset = Asset(
             author=self.super_user, name='test_asset',
