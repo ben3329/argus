@@ -92,6 +92,14 @@ class TestScrapeManager(TestCase):
         await scrape_manager.scrape_data()
         self.assertEqual(scrape_manager.status, 'Normal')
     
+    async def test_scrape_built_in_linux_system_memory_with_pkey(self):
+        self.asset['access_credential']['access_type'] = 'ssh_private_key'
+        self.asset['access_credential']['secret'] = PRIVATE_KEY
+        model = ScrapeModel.parse_obj(self.built_in)
+        scrape_manager = await ScrapeManager.create(model, init_tortoise=False)
+        await scrape_manager.scrape_data()
+        self.assertEqual(scrape_manager.status, 'Normal')
+    
     async def test_scrape_built_in_linux_system_memory_conn_error(self):
         self.asset['ip'] = '1.1.1.1'
         self.built_in['asset'] = self.asset

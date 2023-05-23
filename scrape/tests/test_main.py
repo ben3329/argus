@@ -105,10 +105,8 @@ class TestMain(TestCase):
         self.redis.lpush(self.redis_queue_name, json.dumps(delete_cmd))
         await asyncio.sleep(2)
         self.assertEqual(len(self.main.scheduler.get_jobs()), 0)
-        scrape = await Scrape.all()
-        self.assertEqual(len(scrape), 0)
-        scrape_data = await ScrapeData.all()
-        self.assertEqual(len(scrape_data), 0)
+        scrape = await Scrape.all().first()
+        self.assertEqual(scrape.status, 'Deleted')
         self.assertEqual(list(self.main.scrape_mgr_pool), [])
 
 

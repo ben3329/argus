@@ -15,12 +15,16 @@ class TaskTest(TestCase, CommonMethods):
         User.objects.create_superuser(
             username='admin', password='password', email='admin@myproject.com')
         self.super_user = User.objects.get(username='admin')
-        self.ip='192.168.0.170'
-        self.port = 22222
         self.access_cred = AccessCredential(
-            name='test', username='root', password='sniper!#@$',
+            name='test', username=self.username, password=self.password,
             access_type=AccessTypeChoices.ssh_password, author=self.super_user)
         self.access_cred.save()
+        self.access_cred_pkey = AccessCredential(
+            name='test_pkey', username=self.username, secret=self.pkey,
+            access_type=AccessTypeChoices.ssh_private_key, author=self.super_user
+        )
+        self.access_cred_pkey.save()
+        self.prepare_ssh()
 
     def test_access_test(self):
         result = access_test.delay(self.ip, self.port, self.access_cred.id)
@@ -31,5 +35,9 @@ class TaskTest(TestCase, CommonMethods):
         self.assertEqual(result.get(timeout=5)[0], False)
         
     def test_access_test_unknown_access_cred(self):
-        result = access_test.delay(self.ip, self.port, self.access_cred.id+1)
+        result = access_test.delay(self.ip, self.port, self.access_cred.id+100)
         self.assertEqual(result.get(timeout=5)[0], False)
+    
+    def test_access_test_with_pkey(self):
+        result = access_test.delay(self.ip, self.port, self.access_cred_pkey.id)
+        self.assertEqual(result.get(timeout=5)[0], True)
