@@ -21,7 +21,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-yk8r$@by0k8em_tcyjjh*=iv^$7ll2%re(rc!lhzt4u53$!%0+'
+SECRET_KEY_FILE = '/etc/argus/secret_key'
+if os.path.exists(SECRET_KEY_FILE):
+    with open(SECRET_KEY_FILE, 'r') as f:
+        SECRET_KEY = f.read()
+else:
+    import random
+    SECRET_KEY = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz0123456789%^&*(-_=+)') for i in range(50))
+    with open(SECRET_KEY_FILE, 'w') as f:
+        f.write(SECRET_KEY)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

@@ -1,0 +1,2 @@
+FROM ben3329/argus:latest
+CMD [ "celery", "-A", "argus", "worker", "--logfile", "/var/log/argus/celery.worker.log" ]

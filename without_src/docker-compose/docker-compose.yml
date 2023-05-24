@@ -34,9 +34,8 @@ services:
     ports:
       - 80:8080
     volumes:
-      - ./argus:/app
-      - ./config:/etc/argus
       - ./logs:/var/log/argus
+      - ./config:/etc/argus
     depends_on:
       - database
       - redis
@@ -47,9 +46,8 @@ services:
       REDIS_HOST: redis
       DB_PASSWORD: ${PASSWORD}
     volumes:
-      - ./argus:/app
-      - ./config:/etc/argus
       - ./logs:/var/log/argus
+      - ./config:/etc/argus
     depends_on:
       - redis
   scrape:
@@ -65,7 +63,6 @@ services:
       EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
       TZ: ${TZ}
     volumes:
-      - ./scrape:/app
       - ./logs:/var/log/scrape
     depends_on:
       - redis

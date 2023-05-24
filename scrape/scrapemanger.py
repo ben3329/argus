@@ -23,7 +23,7 @@ class ScrapeManager(object):
         self._status: Literal['Normal', 'Error'] = 'Normal'
         self.dbclient = dbclient
         self.scrape = scrape
-        self.mode = ScrapeMode.debug
+        self.mode = ScrapeMode.normal
 
     @classmethod
     async def create(cls, scrape_model: ScrapeModel, init_tortoise=True):
