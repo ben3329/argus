@@ -291,8 +291,8 @@ $(function () {
                 } else {
                     $('#id_script').remove();
                     var selectedScrape = $("#id_scrape_category option:selected");
-                    fetchFields(selectedScrape.data('fields'))
-                    fetchParameters(selectedScrape.data('parameters'))
+                    fetchFields(selectedScrape.data('fields'), response['scrape_fields']);
+                    fetchParameters(selectedScrape.data('parameters'), response['scrape_parameters']);
                 }
                 $('.scrape_fields').each(function(){
                     if (response['scrape_fields'].includes($(this).val())){

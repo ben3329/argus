@@ -413,13 +413,16 @@ def script(request):
 def get_scrape_choices() -> list:
     result = []
     for category in ScrapeCategoryChoices.choices:
-        match category:
-            case 'linux_system_memory', ref:
-                fields = json.dumps(LinuxSystemMemoryFieldsChoices.names)
-                parameters = '[]'
-            case _:
-                fields = '[]'
-                parameters = '[]'
+        field = category_map[category[0]][0]
+        param = category_map[category[0]][1]
+        if field:
+            fields = json.dumps(category_map[category[0]][0].names)
+        else:
+            fields = '[]'
+        if param:
+            parameters = json.dumps(param.names)
+        else:
+            parameters = '[]'
         result.append(list(category) + [fields, parameters])
     return result
 

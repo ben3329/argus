@@ -40,7 +40,7 @@ class ScrapeModel(BaseModel):
     asset: AssetModel
     scrape_category: type_alias.SCRAPE_CATEGORY
     scrape_fields: Optional[List[str]] = None
-    scrape_parameters: Optional[Dict[str, str]] = None
+    scrape_parameters: Optional[Dict[str, str]] = {}
     user_defined_script: Optional[UserDefinedScriptModel] = None
     interval: int
     report_list: List[type_alias.REPORT_TYPE]

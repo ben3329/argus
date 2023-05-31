@@ -135,7 +135,7 @@
                                         <select name="scrape_category" class="form-control" id="id_scrape_category">
                                             <option selected>------</option>
                                             {% for scrape in scrape_choices %}
-                                                <option value={{scrape.0}} data-fields='{{ scrape.2|safe }}' data-parameters='{{ scrape.3 }}'>{{ scrape.1 }}</option>
+                                                <option value={{scrape.0}} data-fields='{{ scrape.2|safe }}' data-parameters='{{ scrape.3|safe }}'>{{ scrape.1 }}</option>
                                             {% endfor %}
                                         </select>
                                         <div class="text-danger invalid-feedback"></div>

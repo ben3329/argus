@@ -24,6 +24,10 @@ class ScrapeManager(object):
         self.dbclient = dbclient
         self.scrape = scrape
         self.mode = ScrapeMode.normal
+        if scrape_model.scrape_category != 'user_defined_script':
+            self.script_class = built_in_scripts.__CLASS_DICT__[scrape_model.scrape_category]
+        else:
+            self.script_class = None
 
     @classmethod
     async def create(cls, scrape_model: ScrapeModel, init_tortoise=True):
@@ -124,16 +128,7 @@ class ScrapeManager(object):
                 raise ValueError(
                     f"Invalid access_type. access_type:{access_type}")
         # set scraper and get data
-        match (self.scrape_model.scrape_category , self.asset.asset_type):
-            case 'linux_system_memory', 'linux':
-                if self.scrape_model.scrape_parameters:
-                    scraper = built_in_scripts.linux_system_memory.LinuxSystemMemory(
-                        conn, **self.scrape_model.scrape_parameters)
-                else:
-                    scraper = built_in_scripts.linux_system_memory.LinuxSystemMemory(conn)
-            case category, asset_type:
-                raise ValueError(
-                    f"Invalid built in script. category: {category}, asset_type: {asset_type}")
+        scraper = self.script_class(conn, **self.scrape_model.scrape_parameters)
         await scraper.get_data()
         conn.close()
         result = OrderedDict()

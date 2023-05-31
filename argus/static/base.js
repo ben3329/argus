@@ -63,6 +63,7 @@ $(document).ready(function () {
                 }
             }
         });
+        // console.log(processedData);aaaa
         $.ajax({
             url: form.attr('action'),
             type: form.attr('method'),

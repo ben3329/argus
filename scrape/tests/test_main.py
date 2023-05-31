@@ -109,6 +109,20 @@ class TestMain(TestCase):
         self.assertEqual(scrape.status, 'Deleted')
         self.assertEqual(list(self.main.scrape_mgr_pool), [])
 
+    async def test_cmd_create_after_delete(self):
+        delete_cmd = {'cmd': 'delete', 'name': self.scrape_name}
+        self.redis.lpush(self.redis_queue_name, json.dumps(self.create_cmd))
+        await asyncio.sleep(2)
+        self.redis.lpush(self.redis_queue_name, json.dumps(delete_cmd))
+        await asyncio.sleep(2)
+        self.assertEqual(len(self.main.scheduler.get_jobs()), 0)
+        scrape = await Scrape.all().first()
+        self.assertEqual(scrape.status, 'Deleted')
+        self.assertEqual(list(self.main.scrape_mgr_pool), [])
+        self.redis.lpush(self.redis_queue_name, json.dumps(self.create_cmd))
+        await asyncio.sleep(2)
+        scrape = await Scrape.all().first()
+        self.assertEqual(scrape.status, 'Normal')
 
 if __name__ == '__main__':
     with open(log_path, 'w') as f:
