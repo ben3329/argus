@@ -55,6 +55,7 @@ class TestScrapeManager(TestCase):
 
     async def test_create_monitor_from_json_with_built_in_script(self):
         model = ScrapeModel.parse_obj(self.built_in)
+        self.assertEqual(model.scrape_parameters, {})
 
     async def test_create_monitor_from_json_with_built_in_script_invalid_field(self):
         self.built_in['scrape_fields'] = ['invalid_field']

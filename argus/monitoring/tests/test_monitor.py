@@ -74,3 +74,6 @@ class MonitorViewSetTests(APITestCase, CommonMethods):
         }
         response = self.client.post(url, data=data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # check default value
+        monitor = Monitor.objects.filter(name='test').first()
+        self.assertEqual(monitor.scrape_parameters, {})

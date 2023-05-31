@@ -43,7 +43,7 @@ function get_data(chartIndex, monitor) {
             })
             data_list.forEach(function (data) {
                 var datetime = new Date(data.datetime);
-                var formattedTime = datetime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                var formattedTime = datetime.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'});
                 labels.push(formattedTime);
                 $.each(data.data, function(key, value){
                     datasets[key].data.push(value);

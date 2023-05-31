@@ -31,7 +31,7 @@ class ScriptError(Exception):
         self.stderr = stderr
 
     def __str__(self) -> str:
-        return f"The script doesn't return zero. {self.command}. error_msg: {self.stderr}"
+        return f"The script doesn't return zero. {self.script_name}. error_msg: {self.stderr}"
 
 
 class ScriptUploadError(Exception):

@@ -31,6 +31,7 @@ class OutputTypeChoices(models.TextChoices):
 
 class ScrapeCategoryChoices(models.TextChoices):
     linux_system_memory = 'linux_system_memory', 'Linux System Memory'
+    linux_process_memory = 'linux_process_memory', 'Linux Process Memory'
     user_defined_script = 'user_defined_script', 'User Defined Script'
 
     def __str__(self) -> str:
@@ -40,6 +41,22 @@ class ScrapeCategoryChoices(models.TextChoices):
 class LinuxSystemMemoryFieldsChoices(models.TextChoices):
     used = 'used'
     utilization = 'utilization'
+
+
+class LinuxProcessMemoryFieldsChoices(models.TextChoices):
+    vsz = 'vsz'
+    rss = 'rss'
+
+
+class LinuxProcessMemoryParametersChoices(models.TextChoices):
+    pid = 'pid'
+
+
+category_map = {
+    'linux_system_memory': [LinuxSystemMemoryFieldsChoices, None],
+    'linux_process_memory': [LinuxProcessMemoryFieldsChoices, LinuxProcessMemoryParametersChoices],
+    'user_defined_script': [None, None]
+}
 
 
 class ReportListChoices(models.TextChoices):

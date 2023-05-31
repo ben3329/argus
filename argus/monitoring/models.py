@@ -61,7 +61,7 @@ class Monitor(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     scrape_category = models.CharField(choices=ScrapeCategoryChoices.choices, max_length=31)
     scrape_fields = models.JSONField(blank=True, null=True)
-    scrape_parameters = models.JSONField(blank=True, null=True)
+    scrape_parameters = models.JSONField(blank=True, default=dict)
     user_defined_script = models.ForeignKey(
         UserDefinedScript, on_delete=models.SET_NULL, null=True, blank=True)
     interval = models.IntegerField(validators=[MinValueValidator(1)])
